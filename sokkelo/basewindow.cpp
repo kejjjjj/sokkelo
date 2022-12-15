@@ -175,6 +175,7 @@ LRESULT WINAPI MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
                 //SetWindowPos(hWnd_main.GetWindowHandle(), NULL, rect.left, rect.top, width, height, 0);
                 ui.bIsConstructed = false;
+                ui.KillGeneration();
             }
         }
         return 0;
@@ -212,10 +213,11 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     ImGui::Begin(wc.lpszClassName, 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
-    static int gridsize = 32;
+    static int gridsize = 7;
 
-    if (!ui.IsConstructed()) {
-        ui.Construct(ImVec2(hWnd_main.window.Pos), ImVec2(937, 957), gridsize, 100);
+    if (!ui.IsConstructed() || ImGui::SliderInt("gridsize", &gridsize, 1, 1024, "%d")) {
+        ui.KillGeneration();
+        ui.Construct(ImVec2(hWnd_main.window.Pos.x + 100, hWnd_main.window.Pos.y + 200), ImVec2(hWnd_main.window.Pos.x + 100 +737, hWnd_main.window.Pos.y + 200 + 757), gridsize, 0);
     }
     ui.Render();
 

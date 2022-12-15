@@ -6,7 +6,7 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 	//	return true;
 
 	if (!ImGui::GetCurrentContext()) {
-		FatalError("AppUI::Construct failed with: ImGui::GetCurrentContext() == false");
+		FatalError("AppUI::Construct failed with: ImGui::GetCurrentContext() == 0");
 		return false;
 	}
 
@@ -29,7 +29,7 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 	borderCol = _borderCol;
 
 	mins = a_mins;
-	maxs = ImVec2(a_maxs.x, a_maxs.y);
+	maxs = a_maxs;
 	bIsConstructed = true;
 
 	fWidth = maxs.x - mins.x;
@@ -37,9 +37,7 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 
 	fPadding = padding;
 
-	uPixels = (fWidth * fHeight) / gridSize;
-
-	real_mins = ImVec2(mins.x + fPadding, mins.x + fPadding);
+	real_mins = ImVec2(mins.x + fPadding, mins.y + fPadding);
 	real_maxs = ImVec2(maxs.x - fPadding - 16, maxs.y - fPadding - 36);
 
 	bBorder = border;
@@ -83,37 +81,54 @@ void AppUI::Render()
 
 	//uPixels *= uPixels;
 
-	ImVec2 Pixel = ImVec2(2, 0);
-	
-	////Draw(Pixel, COL::RED);
+	//ImVec2 Pixel = ImVec2(2, 0);
+	//
+	//Draw(Pixel, COL::RED);
 	//for (int y = 0; y < vertPixels; y++) {
 
 	//	for (int x = 0; x < horzPixels; x++) {
 
-	//		Draw(ImVec2(x, y), ImVec4(rand() % 255, rand() % 255, rand() % 255, 255));
+	//		Draw(ImVec2(x, y), ImVec4(255, 255, 255, x % 2 == 0 ? 255 : 0));
 	//	}
 
 	//}
 	
 	if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
-		std::thread(ui.IterativeGenerationWrapper, 0).detach();
+
+		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
+		//ui.generation_thread.join();
+
+		//Sleep(500);
 	}
 
 	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis, iPixelsPerAxis, fAspectRatio);
 
-	if (!ui.vCells.empty()) {
+	Clear(COL::BLACK);
 
+	if (!ui.vCells.empty() && ui.bAbleToRender) {
 
+		size_t i = 0;
 		for (auto& cell : ui.vCells) {
 
-			if (cell.bVisited) {
+			if (cell.bBacktraced) {
+				Draw(cell.vPos, COL::BLUE);
+
+			}
+			else if (cell.bVisited) {
 				Draw(cell.vPos, COL::WHITE);
 			}
-			else
-				Draw(cell.vPos, COL::CLEAR);
+			else if (cell.bWall) {
+				Draw(cell.vPos, COL::BLACK);
 
+			}
+			//else {
+			//	Draw(cell.vPos, COL::WHITE);
+			//}
+			i++;
 		}
-
+		Maze::sCell* last = &ui.vCells.back();
+		if(last->bVisited)
+			Draw(last->vPos, COL::GREEN);
 	}
 
 
@@ -128,7 +143,7 @@ void AppUI::Render()
 		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), 1, Height, borderCol);
 
 		//top
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.x + fPadding), Width, 1, borderCol);
+		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), Width, 1, borderCol);
 
 
 		//right

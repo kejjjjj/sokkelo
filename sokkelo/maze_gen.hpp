@@ -22,18 +22,23 @@ public:
 		std::array<sCell*, 4> vNeighbors;
 		bool bVisited; //the cell has already been visited
 		bool bWall; //current cell is a wall
+		bool bBacktraced; //deadend
 		ImVec2 vPos; //position in the grid
 	};
+	std::thread generation_thread;
 	static void IterativeGenerationWrapper(const int& index);
 
 	void IterativeGeneration(const int& index);
+	void KillGeneration();
 
 	std::vector<sCell> vCells;
+	bool bAbleToRender = false;
+	bool bThreadActive = false;
 private:
 	void PopulateCells();
 	void PopulateCellNeighbors();
-	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir);
-
+	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls = true);
+	sCell* GetCellInBetween(const sCell& a, const sCell& b);
 
 	
 

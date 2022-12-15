@@ -14,6 +14,7 @@ void Maze::PopulateCells()
 			cell.bVisited = false;
 			cell.iIndex = cellIdx;
 			cell.vPos = ImVec2(x, y);
+			cell.bBacktraced = false;
 			//cell.vNeighbors.fill(nullptr);
 
 			vCells.push_back(cell);
@@ -36,17 +37,18 @@ void Maze::PopulateCellNeighbors()
 
 	}
 }
-Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir)
+Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls)
 {
 	int cellIndex = 0;
 	const size_t size = vCells.size();
+	const int32_t multiplier = bSkipWalls == true ? 2 : 1;
 	switch (dir) {
 
 	case eDir::N: //above
 
 		//subtract iPixelsPerAxis*2 from the axis 
 
-		cellIndex = cell.iIndex - iPixelsPerAxis * 2;
+		cellIndex = cell.iIndex - iPixelsPerAxis * multiplier;
 
 		if (cellIndex < 0) //current cell is at the top level so it does not have a top neighbor
 			return nullptr;
@@ -60,17 +62,19 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir)
 		//0 HAS to have a right neighbor unless it's a ?x2 grid
 		if (cell.iIndex != 0) {
 
+			int remainder = cell.iIndex % (iPixelsPerAxis);
+
 			//if the remainder is 0, then this cell is at the right edge
-			if (cell.iIndex % (iPixelsPerAxis - 1) == 0) {
+			if (remainder == iPixelsPerAxis - 1) {
 				return 0;
 			}
-			if ((cell.iIndex % (iPixelsPerAxis - 1)) % 2 != 0) {
+			if (cell.iIndex % 2 != 0 && bSkipWalls) {
 				return 0;
 			}
 
 		}
 
-		cellIndex = cell.iIndex + 2;
+		cellIndex = cell.iIndex + multiplier;
 
 		if (cellIndex >= size)
 			return nullptr;
@@ -79,7 +83,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir)
 
 	case eDir::S: //below
 
-		cellIndex = cell.iIndex + iPixelsPerAxis * 2;
+		cellIndex = cell.iIndex + iPixelsPerAxis * multiplier;
 		
 		if (cellIndex >= size) //current cell doesn't have a below neighbor if it exceeds the vCells size
 			return nullptr;
@@ -88,17 +92,16 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir)
 
 	case eDir::W: //left
 
-
 		//if the remainder is 0, then this cell is at the left edge
 		if (cell.iIndex % iPixelsPerAxis == 0) {
 			return 0;
 		}
 
-		if ((cell.iIndex % (iPixelsPerAxis - 1)) % 2 != 0) {
+		if (cell.iIndex % 2 != 0 && bSkipWalls) {
 			return 0;
 		}
 
-		cellIndex = cell.iIndex - 2;
+		cellIndex = cell.iIndex - multiplier;
 
 		if (cellIndex < 0)
 			return nullptr;
@@ -109,40 +112,101 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir)
 
 	return nullptr;
 }
+
+Maze::sCell* Maze::GetCellInBetween(const sCell& a, const sCell& b)
+{
+	const int firstIndex = a.iIndex;
+	const int secondIndex = b.iIndex;
+
+
+
+	//on the right
+	if (secondIndex - firstIndex == 2) {
+		return &vCells[firstIndex + 1];
+	}
+
+	//on the left
+	else if (secondIndex - firstIndex == -2) {
+		return &vCells[firstIndex - 1];
+	}
+	//below
+	else if (secondIndex - firstIndex == iPixelsPerAxis * 2) {
+
+		
+
+		return &vCells[firstIndex + iPixelsPerAxis];
+
+		
+
+	}
+	//above
+	else if (secondIndex - firstIndex == -(iPixelsPerAxis * 2)) {
+		return &vCells[firstIndex - iPixelsPerAxis];
+
+	}
+	FatalError("Can't find a cell between ", firstIndex, " and ", secondIndex);
+	return 0;
+}
+
 void Maze::IterativeGenerationWrapper(const int& index)
 {
 	return ui.IterativeGeneration(index);
 }
+
 void Maze::IterativeGeneration(const int& index) //index = starting position
 {
+	bThreadActive = true;
+	bAbleToRender = false;
 	vCells.clear();
 
 	PopulateCells();
 	PopulateCellNeighbors();
 
-	if (index >= vCells.size()) {
+	if (index >= vCells.size() || vCells.size() >= vCells.max_size()) {
 		FatalError("Maze::IterativeGeneration(): passed index: ", index, " > ", vCells.size());
 		return;
 	}
+	srand(time(NULL));
+	ui.generation_thread.detach();
+	bAbleToRender = true;
 
+	//TODO - FIX THE LAST COLUMN!!!!
+	//BECAUSE: IF THE ITERATOR IS AT THAT PIXEL, THEN IT ASSUMES THERE IS A NEIGHBOR ON THE RIGHT SIDE AND IT STARTS MOVING TO ILLEGAL PIXELS!!!
+
+	//sCell* cell = &vCells[iPixelsPerAxis-1];
+
+	//cell->bVisited = true;
+
+	////cell->vNeighbors[(int)eDir::E] = GetCellNeigbor(*cell, eDir::E);
+
+
+	//if (cell) {
+	//	for (size_t i = 0; i < cell->vNeighbors.size(); i++) {
+	//		if (cell->vNeighbors[i]) {
+	//			std::cout << "neighbor " << i << " exists\n";
+	//		}
+	//	}
+	//}
+
+	//return;
+ 
 	std::vector<sCell*> stack;
 	std::vector<size_t> valid_neighbors;
 
 	stack.push_back(&vCells[index]);
-
+	vCells[index].bWall = false;
 
 	sCell* sCurrentCell;
-	int aaa = 0;
-	while (!stack.empty() && aaa < (vCells.size() / 50)) {
-		aaa++;
+	while (!stack.empty()) {
+		bool backtraced = true;
 		valid_neighbors.clear();
 
-		if (stack.empty())
+		if (stack.empty() || !bThreadActive)
 			break;
 
 		sCurrentCell = stack.back();
 		sCurrentCell->bVisited = true;
-
+		//sCurrentCell->bBacktraced = true;
 		stack.pop_back();
 
 		//get available neighbors
@@ -154,7 +218,8 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 		}
 
 		if (valid_neighbors.size() > 0) {
-
+			backtraced = false;
+			sCurrentCell->bBacktraced = false;
 			//get a random neighbor
 			int rand_idx = valid_neighbors[rand() % (valid_neighbors.size())];
 
@@ -165,10 +230,12 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 			sCell* sChosenCell = sCurrentCell->vNeighbors[rand_idx];
 
 			//Remove the wall between the current cell and the chosen cell
-			ImVec2 angles = VectorsToAngles(sCurrentCell->vPos, sChosenCell->vPos);
-			float angle = atan2(angles.y, angles.x) * 180.f / M_PI;
+			sCell* inBetween = GetCellInBetween(*sCurrentCell, *sChosenCell);
+			if (inBetween) {
+				inBetween->bVisited = true;
+				inBetween->bWall = false;
 
-
+			}
 
 			//Mark the chosen cell as visited and push it to the stack
 			sChosenCell->bVisited = true;
@@ -176,11 +243,21 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 
 
 		}
-		Sleep(250);
+		if (!backtraced)
+			std::this_thread::sleep_for(500us);
 		
 
 	}
 
 	return;
+
+}
+void Maze::KillGeneration()
+{
+	ui.bThreadActive = false;
+	//ui.generation_thread.~thread();
+	Sleep(1);
+	vCells.clear();
+
 
 }
