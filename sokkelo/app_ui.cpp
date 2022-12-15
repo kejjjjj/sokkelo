@@ -10,17 +10,17 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 		return false;
 	}
 
-	if (ImGui::GetCurrentContext()->CurrentWindow) {
-		const ImVec2 wnd_pos = ImGui::GetWindowPos();
-		const ImVec2 wnd_size = ImGui::GetWindowSize();
+	//if (ImGui::GetCurrentContext()->CurrentWindow) {
+	//	const ImVec2 wnd_pos = ImGui::GetWindowPos();
+	//	const ImVec2 wnd_size = ImGui::GetWindowSize();
 
-		if (a_mins.x < wnd_pos.x || a_mins.y < wnd_pos.y || (wnd_pos.x + wnd_size.x) < a_maxs.x || (wnd_pos.y + wnd_size.y) < a_maxs.y) {
+	//	if (a_mins.x < wnd_pos.x || a_mins.y < wnd_pos.y || (wnd_pos.x + wnd_size.x) < a_maxs.x || (wnd_pos.y + wnd_size.y) < a_maxs.y) {
 
-			//FatalError("AppUI::Construct failed with: Set bounds are not within the window bounds");
+	//		//FatalError("AppUI::Construct failed with: Set bounds are not within the window bounds");
 
-			return false;
-		}
-	}
+	//		return false;
+	//	}
+	//}
 
 	dwTimeCreated = Sys_MilliSeconds();
 	fGridSize = gridSize < 1 ? 8 : gridSize;
@@ -44,6 +44,17 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 
 	bBorder = border;
 
+	fAspectRatio = float(real_maxs.x - real_mins.x) / float(real_maxs.y - real_mins.y);
+
+	int x_pixel_count = real_maxs.x - real_mins.x;
+	int y_pixel_count = real_maxs.y - real_mins.y;
+
+	uPixels = (int)(x_pixel_count + y_pixel_count) / (fGridSize);
+
+	vPixelSize = ImVec2(x_pixel_count / uPixels, y_pixel_count / uPixels);
+	iPixelsPerAxis = uPixels;
+	uPixels *= uPixels;
+
 	return true;
 }
 void AppUI::Render()
@@ -53,37 +64,78 @@ void AppUI::Render()
 		return;
 
 
-	if (bBorder) {
+	//int x_pixel_count = real_maxs.x - real_mins.x;
+	//int y_pixel_count = real_maxs.y - real_mins.y;
 
-		//all the 1 means gridSize
+	//uPixels = (int)(x_pixel_count + y_pixel_count) / (fGridSize);
 
-		//left
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), 1, (fHeight - fPadding * 2) - 36, borderCol);
-
-		//top
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.x + fPadding), (fWidth - fPadding * 2) - 1 - 16, 1, borderCol);
-
-		//right
-		gui::DrawRectangleFilled(ImVec2(maxs.x - 1 - fPadding - 16, mins.y + fPadding), ImVec2(maxs.x - fPadding - 16, fHeight - fPadding - 36), borderCol);
-
-		//bottom
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, maxs.y - fPadding - 36 - 1), ImVec2(maxs.x - fPadding - 16, maxs.y - fPadding - 36), borderCol);
-	}
-
-	int x_pixel_count = real_maxs.x - real_mins.x;
-	int y_pixel_count = real_maxs.y - real_mins.y;
-
-	uPixels = (int)((x_pixel_count / ((int)fGridSize * 2)) * (y_pixel_count / ((int)fGridSize * 2)));
 	if (uPixels < 0) {
 		FatalError("Invalid rectangle!");
 		return;
 	}
 
-//	uPixels *= uPixels;
-	DrawRectangleFilled(ImVec2(1, 1), COL::GREEN);
 
 
 
-	ImGui::Text("Total Pixels: %i", uPixels * uPixels);
+
+	int horzPixels = iPixelsPerAxis;
+	int vertPixels = iPixelsPerAxis;
+
+	//uPixels *= uPixels;
+
+	ImVec2 Pixel = ImVec2(2, 0);
+	
+	////Draw(Pixel, COL::RED);
+	//for (int y = 0; y < vertPixels; y++) {
+
+	//	for (int x = 0; x < horzPixels; x++) {
+
+	//		Draw(ImVec2(x, y), ImVec4(rand() % 255, rand() % 255, rand() % 255, 255));
+	//	}
+
+	//}
+	
+	if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
+		std::thread(ui.IterativeGenerationWrapper, 0).detach();
+	}
+
+	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis, iPixelsPerAxis, fAspectRatio);
+
+	if (!ui.vCells.empty()) {
+
+
+		for (auto& cell : ui.vCells) {
+
+			if (cell.bVisited) {
+				Draw(cell.vPos, COL::WHITE);
+			}
+			else
+				Draw(cell.vPos, COL::CLEAR);
+
+		}
+
+	}
+
+
+	if (bBorder) {
+
+		const float Width = (fWidth - fPadding * 2) - 1 - 16;
+		const float Height = (fHeight - fPadding * 2) - 36;
+
+		//all the 1 means gridSize
+
+		//left
+		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), 1, Height, borderCol);
+
+		//top
+		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.x + fPadding), Width, 1, borderCol);
+
+
+		//right
+		gui::DrawRectangleFilled(ImVec2(maxs.x - 1 - fPadding - 16, mins.y + fPadding),	real_maxs, borderCol);
+
+		//bottom
+		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, maxs.y - fPadding - 36 - 1),	real_maxs, borderCol);
+	}
 
 }

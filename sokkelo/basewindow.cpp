@@ -171,10 +171,10 @@ LRESULT WINAPI MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
                 wnd->window.Size = ImVec2(width, height);
 
-                ui.Construct(ImVec2(hWnd_main.window.Pos), ImVec2(hWnd_main.window.Size), 1, 32);
+               // ui.Construct(ImVec2(hWnd_main.window.Pos), ImVec2(hWnd_main.window.Size), 1, 32);
 
                 //SetWindowPos(hWnd_main.GetWindowHandle(), NULL, rect.left, rect.top, width, height, 0);
-
+                ui.bIsConstructed = false;
             }
         }
         return 0;
@@ -212,15 +212,13 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     ImGui::Begin(wc.lpszClassName, 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
-    static int gridsize = 1;
+    static int gridsize = 32;
 
-    if (!ui.IsConstructed() || ImGui::SliderInt("##02024", &gridsize, 0, 1024, "%d")) {
-        ui.Construct(ImVec2(hWnd_main.window.Pos), ImVec2(hWnd_main.window.Size), gridsize, 32);
+    if (!ui.IsConstructed()) {
+        ui.Construct(ImVec2(hWnd_main.window.Pos), ImVec2(937, 957), gridsize, 100);
     }
     ui.Render();
 
-   // hWnd_main.window.Pos = ImGui::GetWindowPos();
-   // hWnd_main.window.Size = ImGui::GetWindowSize();
     window.active = ImGui::IsWindowFocused();
 
     ImGui::SetWindowSize(hWnd_main.window.Size);

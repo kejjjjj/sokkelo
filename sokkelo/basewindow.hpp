@@ -67,7 +67,7 @@ public:
 
 
 private:
-    WNDCLASSEXA wc;
+    WNDCLASSEXA wc{};
     HWND hwnd = 0;
     std::string szTitle = "";
     bool initialized = FALSE;

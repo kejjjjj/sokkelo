@@ -34,6 +34,9 @@
     <Filter Include="Source Files\time">
       <UniqueIdentifier>{e391bb6b-d1e4-42cb-9a8e-7e6d87379559}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\math">
+      <UniqueIdentifier>{1b952505-0ced-4d6f-b284-2b21feda3dc4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -99,6 +102,12 @@
     <ClInclude Include="timing.hpp">
       <Filter>Source Files\time</Filter>
     </ClInclude>
+    <ClInclude Include="maze_gen.hpp">
+      <Filter>Source Files\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="qmath.hpp">
+      <Filter>Source Files\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sokkelo.cpp">
@@ -151,6 +160,12 @@
     </ClCompile>
     <ClCompile Include="timing.cpp">
       <Filter>Source Files\time</Filter>
+    </ClCompile>
+    <ClCompile Include="maze_gen.cpp">
+      <Filter>Source Files\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="qmath.cpp">
+      <Filter>Source Files\math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

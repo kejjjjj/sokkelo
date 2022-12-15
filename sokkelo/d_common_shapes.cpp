@@ -1,6 +1,10 @@
 #include "sokkelo.h"
 
+void gui::Draw(const ImVec2& pos, const ImVec4& col)
+{
+	ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + 1, pos.y + 1), IM_COL32(col.x, col.y, col.z, col.w));
 
+}
 void gui::DrawRectangle(const ImVec2& mins, const ImVec2& maxs, const ImVec4& col)
 {
 	ImGui::GetWindowDrawList()->AddRect(mins, maxs, IM_COL32(col.x, col.y, col.z, col.w));

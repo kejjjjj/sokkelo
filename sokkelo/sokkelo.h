@@ -14,6 +14,14 @@ typedef unsigned long long UPTR;
 typedef unsigned long UPTR;
 #endif
 
+typedef float vec_t;
+typedef vec_t vec2_t[2];
+typedef vec_t vec3_t[3];
+typedef vec_t vec4_t[4];
+
+#define VectorSubtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
+
+
 #include <Windows.h>
 #include <thread>
 #include <vector>
@@ -25,6 +33,7 @@ typedef unsigned long UPTR;
 #include <fstream>
 #include <direct.h>
 #include <timeapi.h>
+#include <array>
 
 #include "resource.h"
 #include "framework.h"
@@ -38,6 +47,8 @@ typedef unsigned long UPTR;
 #include <d3d11.h>
 #include <d3dx11.h>
 
+#include "qmath.hpp"
+
 #include "d_common_shapes.hpp"
 
 #include "filetools.hpp"
@@ -48,6 +59,7 @@ typedef unsigned long UPTR;
 #include "basewindow.hpp"
 
 #include "app_ui.hpp"
+#include "maze_gen.hpp"
 
 #include "timing.hpp"
 

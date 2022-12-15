@@ -37,7 +37,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,_In_opt_ HINSTANCE hPrevInstance,
     MSG msg{};
     ImGuiIO& io = ImGui::GetIO();
 
-   // SetWindowPos(hWnd_main.GetWindowHandle(), NULL, 300, 300, 300, 300, SWP_NOACTIVATE | SWP_HIDEWINDOW);
+    SetWindowPos(hWnd_main.GetWindowHandle(), NULL, 300, 0, 937, 957, 0);
 
 
     tagRECT rect;
