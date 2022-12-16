@@ -92,7 +92,13 @@ void AppUI::Render()
 	//	}
 
 	//}
-	
+	if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
+		CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze.map", &ui, 256);
+
+		cod4.BeginConversion();
+		//ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
+
+	}
 	if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
 
 		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);

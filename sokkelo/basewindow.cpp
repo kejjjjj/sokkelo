@@ -217,7 +217,7 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     if (!ui.IsConstructed() || ImGui::SliderInt("gridsize", &gridsize, 1, 1024, "%d")) {
         ui.KillGeneration();
-        ui.Construct(ImVec2(hWnd_main.window.Pos.x + 100, hWnd_main.window.Pos.y + 200), ImVec2(hWnd_main.window.Pos.x + 100 +737, hWnd_main.window.Pos.y + 200 + 757), gridsize, 0);
+        ui.Construct(ImVec2(hWnd_main.window.Pos.x + 100, hWnd_main.window.Pos.y + 200), ImVec2(hWnd_main.window.Pos.x + 100 +737, hWnd_main.window.Pos.y + 200 + 757), gridsize, 1);
     }
     ui.Render();
 

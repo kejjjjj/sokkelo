@@ -306,14 +306,14 @@ void Maze::AldousBroderAlgorithm(const int& index)
 			looped++;
 		
 
-		if (looped > 100000)
+		if (looped > 1000000)
 			break;
 
 		//Make the chosen neighbour the current cell.
 		sCurrentCell = sChosenCell;
 
-		if(!backtraced)
-			Sleep(1);
+		//if (!backtraced)
+		//	std::this_thread::sleep_for(50us);
 	}
 
 

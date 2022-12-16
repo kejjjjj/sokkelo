@@ -108,6 +108,9 @@
     <ClInclude Include="qmath.hpp">
       <Filter>Source Files\math</Filter>
     </ClInclude>
+    <ClInclude Include="whattheheck.hpp">
+      <Filter>Source Files\Application</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sokkelo.cpp">
@@ -166,6 +169,9 @@
     </ClCompile>
     <ClCompile Include="qmath.cpp">
       <Filter>Source Files\math</Filter>
+    </ClCompile>
+    <ClCompile Include="whattheheck.cpp">
+      <Filter>Source Files\Application</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
