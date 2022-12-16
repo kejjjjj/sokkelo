@@ -213,7 +213,7 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     ImGui::Begin(wc.lpszClassName, 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
-    static int gridsize = 7;
+    static int gridsize = 8;
 
     if (!ui.IsConstructed() || ImGui::SliderInt("gridsize", &gridsize, 1, 1024, "%d")) {
         ui.KillGeneration();

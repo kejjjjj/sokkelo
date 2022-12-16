@@ -27,8 +27,11 @@ public:
 	};
 	std::thread generation_thread;
 	static void IterativeGenerationWrapper(const int& index);
+	static void AldousBroderAlgorithmWrapper(const int& index);
 
 	void IterativeGeneration(const int& index);
+	void AldousBroderAlgorithm(const int& index);
+
 	void KillGeneration();
 
 	std::vector<sCell> vCells;

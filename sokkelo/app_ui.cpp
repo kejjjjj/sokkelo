@@ -96,11 +96,14 @@ void AppUI::Render()
 	if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
 
 		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
-		//ui.generation_thread.join();
 
-		//Sleep(500);
 	}
+	if (GetAsyncKeyState(VK_NUMPAD9) & 1) {
 
+		ui.generation_thread = std::thread(ui.AldousBroderAlgorithmWrapper, 0);
+
+
+	}
 	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis, iPixelsPerAxis, fAspectRatio);
 
 	Clear(COL::BLACK);

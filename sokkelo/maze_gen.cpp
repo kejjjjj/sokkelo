@@ -152,7 +152,10 @@ void Maze::IterativeGenerationWrapper(const int& index)
 {
 	return ui.IterativeGeneration(index);
 }
-
+void Maze::AldousBroderAlgorithmWrapper(const int& index)
+{
+	return ui.AldousBroderAlgorithm(index);
+}
 void Maze::IterativeGeneration(const int& index) //index = starting position
 {
 	bThreadActive = true;
@@ -169,26 +172,6 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 	srand(time(NULL));
 	ui.generation_thread.detach();
 	bAbleToRender = true;
-
-	//TODO - FIX THE LAST COLUMN!!!!
-	//BECAUSE: IF THE ITERATOR IS AT THAT PIXEL, THEN IT ASSUMES THERE IS A NEIGHBOR ON THE RIGHT SIDE AND IT STARTS MOVING TO ILLEGAL PIXELS!!!
-
-	//sCell* cell = &vCells[iPixelsPerAxis-1];
-
-	//cell->bVisited = true;
-
-	////cell->vNeighbors[(int)eDir::E] = GetCellNeigbor(*cell, eDir::E);
-
-
-	//if (cell) {
-	//	for (size_t i = 0; i < cell->vNeighbors.size(); i++) {
-	//		if (cell->vNeighbors[i]) {
-	//			std::cout << "neighbor " << i << " exists\n";
-	//		}
-	//	}
-	//}
-
-	//return;
  
 	std::vector<sCell*> stack;
 	std::vector<size_t> valid_neighbors;
@@ -250,6 +233,90 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 	}
 
 	return;
+
+}
+void Maze::AldousBroderAlgorithm(const int& index)
+{
+	bThreadActive = true;
+	bAbleToRender = false;
+	vCells.clear();
+
+	PopulateCells();
+	PopulateCellNeighbors();
+
+	if (index >= vCells.size() || vCells.size() >= vCells.max_size()) {
+		FatalError("Maze::AldousBroderAlgorithm(): passed index: ", index, " > ", vCells.size());
+		return;
+	}
+	srand(time(NULL));
+	ui.generation_thread.detach();
+	bAbleToRender = true;
+
+	std::vector<size_t> valid_neighbors;
+
+	//Pick a random cell as the current cell and mark it as visited.
+	vCells[index].bWall = false;
+	vCells[index].bVisited = true;
+
+	sCell* sCurrentCell = &vCells[index];
+
+	int neighbors_left_to_visit = vCells.size();
+	size_t visited_cells = 0;
+	DWORD looped = 0;
+	//While there are unvisited cells:
+	while (neighbors_left_to_visit) {
+
+		bool backtraced = true;
+		valid_neighbors.clear();
+
+		if (!bThreadActive)
+			break;
+
+		//get available neighbors
+		for (size_t i = 0; i < 4; i++) {
+			if (sCurrentCell->vNeighbors[i]) {
+					valid_neighbors.push_back(i); 
+			}
+		}
+
+
+		//Pick a random neighbour.
+		int rand_idx = valid_neighbors[rand() % (valid_neighbors.size())];
+		sCell* sChosenCell = sCurrentCell->vNeighbors[rand_idx];
+
+		//If the chosen neighbour has not been visited:
+		if (!sChosenCell->bVisited) {
+			backtraced = false;
+			//Remove the wall between the current cell and the chosen neighbour.
+			sCell* inBetween = GetCellInBetween(*sCurrentCell, *sChosenCell);
+			if (inBetween) {
+				inBetween->bVisited = true;
+				inBetween->bWall = false;
+				--neighbors_left_to_visit;
+				++visited_cells;
+			}
+
+			//Mark the chosen neighbour as visited.
+			sChosenCell->bVisited = true;
+			--neighbors_left_to_visit;
+			++visited_cells;
+			looped = 0;
+		}
+		else
+			looped++;
+		
+
+		if (looped > 100000)
+			break;
+
+		//Make the chosen neighbour the current cell.
+		sCurrentCell = sChosenCell;
+
+		if(!backtraced)
+			Sleep(1);
+	}
+
+
 
 }
 void Maze::KillGeneration()
