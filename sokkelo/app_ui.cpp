@@ -1,6 +1,6 @@
 #include "sokkelo.h"
 
-bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& gridSize, const float& padding,  const bool& border, const ImVec4& bg_col, const ImVec4& tile_col, const ImVec4 _borderCol) {
+bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& gridSize,  const bool& border, const ImVec4& bg_col, const ImVec4& tile_col, const ImVec4 _borderCol) {
 
 	//if (bIsConstructed)
 	//	return true;
@@ -35,22 +35,44 @@ bool AppUI::Construct(const ImVec2& a_mins, const ImVec2& a_maxs, const float& g
 	fWidth = maxs.x - mins.x;
 	fHeight = maxs.y - mins.y;
 
-	fPadding = padding;
-
-	real_mins = ImVec2(mins.x + fPadding, mins.y + fPadding);
-	real_maxs = ImVec2(maxs.x - fPadding - 16, maxs.y - fPadding - 36);
+	real_mins = ImVec2(mins.x, mins.y);
+	real_maxs = ImVec2(maxs.x - 16, maxs.y - 36);
 
 	bBorder = border;
-
-	fAspectRatio = float(real_maxs.x - real_mins.x) / float(real_maxs.y - real_mins.y);
 
 	int x_pixel_count = real_maxs.x - real_mins.x;
 	int y_pixel_count = real_maxs.y - real_mins.y;
 
+	x_pixel_count /= fGridSize;
+	y_pixel_count /= fGridSize;
+
+	fAspectRatio = float(x_pixel_count) / float(y_pixel_count);
+
+
 	uPixels = (int)(x_pixel_count + y_pixel_count) / (fGridSize);
 
-	vPixelSize = ImVec2(x_pixel_count / uPixels, y_pixel_count / uPixels);
-	iPixelsPerAxis = uPixels;
+	if (uPixels <= 0)		uPixels = 1;
+	if (x_pixel_count <= 0)	x_pixel_count = 1;
+	if (y_pixel_count <= 0)	y_pixel_count = 1;
+
+	vPixelSize = ImVec2((x_pixel_count + y_pixel_count) / x_pixel_count * (fGridSize / 2), 
+						(x_pixel_count + y_pixel_count) / y_pixel_count * (fGridSize / 2));
+
+	vPixelSize.x = (int)vPixelSize.x;
+	vPixelSize.y = (int)vPixelSize.y;
+
+	if (vPixelSize.x > vPixelSize.y)
+		vPixelSize.y = vPixelSize.x;
+	else
+		vPixelSize.x = vPixelSize.y;
+
+	
+	iPixelsPerAxis.x = x_pixel_count;
+	iPixelsPerAxis.y = y_pixel_count;
+
+	real_maxs.x = real_mins.x + ((iPixelsPerAxis.x) * vPixelSize.x);
+	real_maxs.y = real_mins.y + ((iPixelsPerAxis.y) * vPixelSize.y);
+
 	uPixels *= uPixels;
 
 	return true;
@@ -61,12 +83,6 @@ void AppUI::Render()
 	if (!bIsConstructed)
 		return;
 
-
-	//int x_pixel_count = real_maxs.x - real_mins.x;
-	//int y_pixel_count = real_maxs.y - real_mins.y;
-
-	//uPixels = (int)(x_pixel_count + y_pixel_count) / (fGridSize);
-
 	if (uPixels < 0) {
 		FatalError("Invalid rectangle!");
 		return;
@@ -75,42 +91,20 @@ void AppUI::Render()
 
 
 
+	const int horzPixels = iPixelsPerAxis.x;
+	const int vertPixels = iPixelsPerAxis.y;
 
-	int horzPixels = iPixelsPerAxis;
-	int vertPixels = iPixelsPerAxis;
 
-	//uPixels *= uPixels;
-
-	//ImVec2 Pixel = ImVec2(2, 0);
-	//
-	//Draw(Pixel, COL::RED);
-	//for (int y = 0; y < vertPixels; y++) {
-
-	//	for (int x = 0; x < horzPixels; x++) {
-
-	//		Draw(ImVec2(x, y), ImVec4(255, 255, 255, x % 2 == 0 ? 255 : 0));
-	//	}
-
-	//}
-	if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
-		CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze.map", &ui, 256);
-
-		cod4.BeginConversion();
-		//ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
-
+	if (!ui.bThreadActive) {
+		if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
+			CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze.map", &ui, 256);
+			cod4.BeginConversion();
+		}
+		if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
+			ui.StartGeneration();
+		}
 	}
-	if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
-
-		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
-
-	}
-	if (GetAsyncKeyState(VK_NUMPAD9) & 1) {
-
-		ui.generation_thread = std::thread(ui.AldousBroderAlgorithmWrapper, 0);
-
-
-	}
-	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis, iPixelsPerAxis, fAspectRatio);
+	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis.x, iPixelsPerAxis.y, fAspectRatio);
 
 	Clear(COL::BLACK);
 
@@ -130,12 +124,9 @@ void AppUI::Render()
 				Draw(cell.vPos, COL::BLACK);
 
 			}
-			//else {
-			//	Draw(cell.vPos, COL::WHITE);
-			//}
 			i++;
 		}
-		Maze::sCell* last = &ui.vCells.back();
+		const Maze::sCell* last = &ui.vCells.back();
 		if(last->bVisited)
 			Draw(last->vPos, COL::GREEN);
 	}
@@ -143,23 +134,23 @@ void AppUI::Render()
 
 	if (bBorder) {
 
-		const float Width = (fWidth - fPadding * 2) - 1 - 16;
-		const float Height = (fHeight - fPadding * 2) - 36;
-
 		//all the 1 means gridSize
 
+
 		//left
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), 1, Height, borderCol);
+		gui::DrawRectangleFilled(ImVec2(mins.x, mins.y), ImVec2(mins.x + 1, real_maxs.y), borderCol);
+
 
 		//top
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, mins.y + fPadding), Width, 1, borderCol);
-
+		gui::DrawRectangleFilled(ImVec2(mins.x, mins.y), ImVec2(real_maxs.x, mins.y + 1), borderCol);
 
 		//right
-		gui::DrawRectangleFilled(ImVec2(maxs.x - 1 - fPadding - 16, mins.y + fPadding),	real_maxs, borderCol);
+		gui::DrawRectangleFilled(ImVec2(real_maxs.x - 1, mins.y),	real_maxs, borderCol);
 
 		//bottom
-		gui::DrawRectangleFilled(ImVec2(mins.x + fPadding, maxs.y - fPadding - 36 - 1),	real_maxs, borderCol);
+		gui::DrawRectangleFilled(ImVec2(mins.x, real_maxs.y - 1),	real_maxs, borderCol);
 	}
+
+	ImGui::Dummy(ImVec2(real_maxs.x - real_mins.x, real_maxs.y - real_mins.y + 10));
 
 }

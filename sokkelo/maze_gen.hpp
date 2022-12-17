@@ -10,6 +10,11 @@ class Maze : public AppUI
 {
 public:
 
+	enum class eMazeAlgorithm {
+		Depth_First,
+		Aldous_Broder
+	};
+
 	enum class eDir
 	{
 		N, E, S, W
@@ -26,23 +31,27 @@ public:
 		ImVec2 vPos; //position in the grid
 	};
 	std::thread generation_thread;
+	void StartGeneration();
 	static void IterativeGenerationWrapper(const int& index);
 	static void AldousBroderAlgorithmWrapper(const int& index);
 
 	void IterativeGeneration(const int& index);
 	void AldousBroderAlgorithm(const int& index);
+	void SetAlgorithm(const eMazeAlgorithm& alg);
+	eMazeAlgorithm GetAlgorithm();
 
 	void KillGeneration();
 
 	std::vector<sCell> vCells;
 	bool bAbleToRender = false;
 	bool bThreadActive = false;
+
 private:
 	void PopulateCells();
 	void PopulateCellNeighbors();
 	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls = true);
 	sCell* GetCellInBetween(const sCell& a, const sCell& b);
-
+	eMazeAlgorithm algorithm = eMazeAlgorithm::Depth_First;
 	
 
 };

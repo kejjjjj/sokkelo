@@ -62,6 +62,7 @@ typedef vec_t vec4_t[4];
 
 #include "appwindows.hpp"
 #include "basewindow.hpp"
+#include "basetabs.hpp"
 
 #include "app_ui.hpp"
 #include "maze_gen.hpp"

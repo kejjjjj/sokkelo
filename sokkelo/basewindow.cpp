@@ -211,15 +211,18 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin(wc.lpszClassName, 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+    ImGui::Begin(wc.lpszClassName, 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
 
-    static int gridsize = 8;
+    MW::RenderTabBar();
 
-    if (!ui.IsConstructed() || ImGui::SliderInt("gridsize", &gridsize, 1, 1024, "%d")) {
+    static float gridsize = 3.52f;
+
+    if (!ui.IsConstructed() || ImGui::SliderFloat("gridsize", &gridsize, 1, 1024, "%.2f")) {
         ui.KillGeneration();
-        ui.Construct(ImVec2(hWnd_main.window.Pos.x + 100, hWnd_main.window.Pos.y + 200), ImVec2(hWnd_main.window.Pos.x + 100 +737, hWnd_main.window.Pos.y + 200 + 757), gridsize, 1);
+        ui.Construct(ImVec2(hWnd_main.window.Pos.x+10, hWnd_main.window.Pos.y + 200), 1111, 600, gridsize, true);
     }
     ui.Render();
+    ImGui::Text("hello from below");
 
     window.active = ImGui::IsWindowFocused();
 

@@ -263,6 +263,21 @@ struct ImVec2
 };
 
 
+// ImVec2: 2D vector used to store positions, sizes etc. [Compile-time configurable type]
+// This is a frequently used type in the API. Consider using IM_VEC2_CLASS_EXTRA to create implicit cast from/to our preferred type.
+IM_MSVC_RUNTIME_CHECKS_OFF
+struct ImVec2i
+{
+    int                                   x, y;
+    constexpr ImVec2i() : x(0.0f), y(0.0f) { }
+    constexpr ImVec2i(int _x, int _y) : x(_x), y(_y) { }
+    int  operator[] (size_t idx) const { IM_ASSERT(idx <= 1); return (&x)[idx]; }    // We very rarely use this [] operator, the assert overhead is fine.
+    int& operator[] (size_t idx) { IM_ASSERT(idx <= 1); return (&x)[idx]; }    // We very rarely use this [] operator, the assert overhead is fine.
+#ifdef IM_VEC2_CLASS_EXTRA
+    IM_VEC2_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imconfig.h to convert back and forth between your math types and ImVec2.
+#endif
+};
+
 // ImVec4: 4D vector used to store clipping rectangles, colors etc. [Compile-time configurable type]
 struct ImVec4
 {

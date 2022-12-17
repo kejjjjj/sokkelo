@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="appwindows.hpp" />
     <ClInclude Include="app_ui.hpp" />
+    <ClInclude Include="basetabs.hpp" />
     <ClInclude Include="basewindow.hpp" />
     <ClInclude Include="d_common_shapes.hpp" />
     <ClInclude Include="filetools.hpp" />
@@ -201,6 +202,7 @@
   <ItemGroup>
     <ClCompile Include="appwindows.cpp" />
     <ClCompile Include="app_ui.cpp" />
+    <ClCompile Include="basetabs.cpp" />
     <ClCompile Include="basewindow.cpp" />
     <ClCompile Include="d_common_shapes.cpp" />
     <ClCompile Include="filetools.cpp" />

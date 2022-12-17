@@ -6,9 +6,9 @@ void Maze::PopulateCells()
 
 	sCell cell;
 
-	for (int y = 0; y < iPixelsPerAxis; y++) {
+	for (int y = 0; y < iPixelsPerAxis.y; y++) {
 
-		for (int x = 0; x < iPixelsPerAxis; x++) {
+		for (int x = 0; x < iPixelsPerAxis.x; x++) {
 
 			cell.bWall = true;
 			cell.bVisited = false;
@@ -48,7 +48,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 
 		//subtract iPixelsPerAxis*2 from the axis 
 
-		cellIndex = cell.iIndex - iPixelsPerAxis * multiplier;
+		cellIndex = cell.iIndex - iPixelsPerAxis.x * multiplier;
 
 		if (cellIndex < 0) //current cell is at the top level so it does not have a top neighbor
 			return nullptr;
@@ -62,10 +62,10 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 		//0 HAS to have a right neighbor unless it's a ?x2 grid
 		if (cell.iIndex != 0) {
 
-			int remainder = cell.iIndex % (iPixelsPerAxis);
+			int remainder = cell.iIndex % (iPixelsPerAxis.x);
 
 			//if the remainder is 0, then this cell is at the right edge
-			if (remainder == iPixelsPerAxis - 1) {
+			if (remainder == iPixelsPerAxis.x - 1) {
 				return 0;
 			}
 			if (cell.iIndex % 2 != 0 && bSkipWalls) {
@@ -83,7 +83,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 
 	case eDir::S: //below
 
-		cellIndex = cell.iIndex + iPixelsPerAxis * multiplier;
+		cellIndex = cell.iIndex + iPixelsPerAxis.x * multiplier;
 		
 		if (cellIndex >= size) //current cell doesn't have a below neighbor if it exceeds the vCells size
 			return nullptr;
@@ -93,7 +93,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 	case eDir::W: //left
 
 		//if the remainder is 0, then this cell is at the left edge
-		if (cell.iIndex % iPixelsPerAxis == 0) {
+		if (cell.iIndex % iPixelsPerAxis.x == 0) {
 			return 0;
 		}
 
@@ -130,24 +130,48 @@ Maze::sCell* Maze::GetCellInBetween(const sCell& a, const sCell& b)
 		return &vCells[firstIndex - 1];
 	}
 	//below
-	else if (secondIndex - firstIndex == iPixelsPerAxis * 2) {
+	else if (secondIndex - firstIndex == iPixelsPerAxis.x * 2) {
 
 		
 
-		return &vCells[firstIndex + iPixelsPerAxis];
+		return &vCells[firstIndex + iPixelsPerAxis.x];
 
 		
 
 	}
 	//above
-	else if (secondIndex - firstIndex == -(iPixelsPerAxis * 2)) {
-		return &vCells[firstIndex - iPixelsPerAxis];
+	else if (secondIndex - firstIndex == -(iPixelsPerAxis.x * 2)) {
+		return &vCells[firstIndex - iPixelsPerAxis.x];
 
 	}
 	FatalError("Can't find a cell between ", firstIndex, " and ", secondIndex);
 	return 0;
 }
+void Maze::SetAlgorithm(const eMazeAlgorithm& alg)
+{
+	algorithm = alg;
+}
+Maze::eMazeAlgorithm Maze::GetAlgorithm()
+{
+	return algorithm;
+}
+void Maze::StartGeneration()
+{
+	switch (algorithm) {
+	case eMazeAlgorithm::Depth_First:
+		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
+		break;
 
+	case eMazeAlgorithm::Aldous_Broder:
+		ui.generation_thread = std::thread(ui.AldousBroderAlgorithmWrapper, 0);
+		break;
+
+	default:
+		break;
+	}
+
+
+}
 void Maze::IterativeGenerationWrapper(const int& index)
 {
 	return ui.IterativeGeneration(index);
@@ -231,6 +255,7 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 		
 
 	}
+	bThreadActive = false;
 
 	return;
 
@@ -281,8 +306,11 @@ void Maze::AldousBroderAlgorithm(const int& index)
 
 
 		//Pick a random neighbour.
-		int rand_idx = valid_neighbors[rand() % (valid_neighbors.size())];
+		const int rand_idx = valid_neighbors[rand() % (valid_neighbors.size())];
 		sCell* sChosenCell = sCurrentCell->vNeighbors[rand_idx];
+
+		if (!bThreadActive)
+			break;
 
 		//If the chosen neighbour has not been visited:
 		if (!sChosenCell->bVisited) {
@@ -306,17 +334,17 @@ void Maze::AldousBroderAlgorithm(const int& index)
 			looped++;
 		
 
-		if (looped > 1000000)
+		if (looped > 10000000)
 			break;
 
 		//Make the chosen neighbour the current cell.
 		sCurrentCell = sChosenCell;
 
-		//if (!backtraced)
-		//	std::this_thread::sleep_for(50us);
+		if (!backtraced)
+			std::this_thread::sleep_for(50us);
 	}
 
-
+	bThreadActive = false;
 
 }
 void Maze::KillGeneration()
