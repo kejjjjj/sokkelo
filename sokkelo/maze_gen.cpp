@@ -250,8 +250,8 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 
 
 		}
-		if (!backtraced)
-			std::this_thread::sleep_for(500us);
+		//if (!backtraced)
+		//	std::this_thread::sleep_for(500us);
 		
 
 	}
@@ -340,8 +340,8 @@ void Maze::AldousBroderAlgorithm(const int& index)
 		//Make the chosen neighbour the current cell.
 		sCurrentCell = sChosenCell;
 
-		if (!backtraced)
-			std::this_thread::sleep_for(50us);
+		//if (!backtraced)
+		//	std::this_thread::sleep_for(50us);
 	}
 
 	bThreadActive = false;
