@@ -15,6 +15,7 @@ void Maze::PopulateCells()
 			cell.iIndex = cellIdx;
 			cell.vPos = ImVec2(x, y);
 			cell.bBacktraced = false;
+			cell.bAlreadyMerged = false;
 			//cell.vNeighbors.fill(nullptr);
 
 			vCells.push_back(cell);

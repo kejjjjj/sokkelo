@@ -29,6 +29,7 @@ public:
 		bool bWall; //current cell is a wall
 		bool bBacktraced; //deadend
 		ImVec2 vPos; //position in the grid
+		bool bAlreadyMerged; //
 	};
 	std::thread generation_thread;
 	void StartGeneration();
@@ -45,11 +46,11 @@ public:
 	std::vector<sCell> vCells;
 	bool bAbleToRender = false;
 	bool bThreadActive = false;
+	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls = true);
 
 private:
 	void PopulateCells();
 	void PopulateCellNeighbors();
-	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls = true);
 	sCell* GetCellInBetween(const sCell& a, const sCell& b);
 	eMazeAlgorithm algorithm = eMazeAlgorithm::Depth_First;
 	

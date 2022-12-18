@@ -28,7 +28,8 @@ struct CoD4
 		posY,
 		negX,
 		negY,
-		negZ
+		negZ,
+		INVALID
 
 	};
 
@@ -47,6 +48,8 @@ struct CoD4
 	void WriteEntities();
 
 	void CellToBounds(const Maze::sCell* cell, brush_t& brush);
+	void CellsToBounds(Maze::sCell* cell, brush_t& brush, std::vector<Maze::sCell>::iterator& it);
+
 	void WriteBrush(const brush_t& brush, const int brushIndex, std::array<const char*, 6>& textures);
 
 private:

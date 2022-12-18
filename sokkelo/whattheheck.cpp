@@ -22,6 +22,7 @@ void CoD4::WriteMapRelatedUnnecessaryStuff()
 }
 void CoD4::CellToBounds(const Maze::sCell* cell, brush_t& brush)
 {
+
 	const ImVec2 pos = cell->vPos;
 
 
@@ -48,8 +49,70 @@ void CoD4::CellToBounds(const Maze::sCell* cell, brush_t& brush)
 	brush.maxs[1] = brush.origin[1] + length;
 	brush.maxs[2] = maxs;
 
+	//if (!brush.bWalkable) {
+	//	brush.maxs[2] = sqrt(brush.origin[0] * brush.origin[0] + brush.origin[1] * brush.origin[1]) / 5;
+	//	if(brush.maxs[2] < brushsize)
+	//		brush.maxs[2] = brushsize;
+	//}
+
+}
+void CoD4::CellsToBounds(Maze::sCell* cell, brush_t& brush, std::vector<Maze::sCell>::iterator& it)
+{
+	if (it >= ui.vCells.end() - 1)
+		return;
+
+	eTextures direction = eTextures::INVALID;
+	brush_t b2, backup;
+	
+	CellToBounds(cell, brush);
+
+	++it;
+
+	if (it->bAlreadyMerged)
+		return;
 
 
+	if (it >= ui.vCells.end()-1)
+		return;
+
+	CellToBounds(&*it, b2);
+
+	if (brush.maxs[1] == b2.maxs[1])
+		direction = eTextures::posX;
+
+
+	if (direction == eTextures::INVALID || brush.maxs[2] != b2.maxs[2]) {
+		--it;
+		return;
+	}
+	--it;
+	const int index = direction == eTextures::posX ? 1 : 0; 
+
+	backup = brush;
+	int times_looped = 0;
+	float ADD = 0;
+	while(true){
+		++it;
+
+		if (it >= ui.vCells.end() - 1)
+			break;
+
+		CellToBounds(&*it, b2);
+
+		if (brush.maxs[index] != b2.maxs[index] || brush.maxs[2] != b2.maxs[2]) {
+			--it;
+			break;
+		}
+
+		backup = b2;
+		times_looped++;
+		ADD += brushsize;
+		it->bAlreadyMerged = true;
+	}
+
+	brush.maxs[!index] += ADD;
+	cell->bAlreadyMerged = true;
+	
 }
 void CoD4::WriteBrush(const brush_t& brush, const int brushIndex, std::array<const char*, 6>& textures)
 {
@@ -445,8 +508,21 @@ void CoD4::BeginConversion()
 
 	textures[(int)eTextures::negZ] = "caulk";
 
-	for (const auto& cell : ui.vCells) {
-		CellToBounds(&cell, brush);
+	auto begin = ui.vCells.begin();
+	auto end = ui.vCells.end();
+
+
+	std::vector<Maze::sCell>::iterator a;
+	int i = 0;
+	for (auto it = begin; it != end; ++it) {
+
+
+		Maze::sCell* cell = &*it;
+
+		if (it == begin || i == ui.vCells.size()-1)
+			CellToBounds(cell, brush);
+		else
+			CellsToBounds(cell, brush, it);
 
 		if (brush.bWalkable) {
 			textures[(int)eTextures::posX] = "caulk";
@@ -467,13 +543,25 @@ void CoD4::BeginConversion()
 		if (ibrushIndex == 0) {
 			textures[(int)eTextures::posZ] = "icbm_hazardstripe2";
 		}
-		else if (ibrushIndex == ui.vCells.size() - 1) {
+		else if (ibrushIndex == ui.vCells.size() - 1 || i == ui.vCells.size() - 1) {
 			textures[(int)eTextures::posZ] = "icbm_freightelevator";
 
 		}
-
+		i++;
 		WriteBrush(brush, ibrushIndex, textures);
 	}
+
+	Maze::sCell* cell = &ui.vCells.back();
+	CellToBounds(cell, brush);
+
+	textures[(int)eTextures::posX] = "caulk";
+	textures[(int)eTextures::posY] = "caulk";
+	textures[(int)eTextures::posZ] = "icbm_freightelevator";
+	textures[(int)eTextures::negX] = "caulk";
+	textures[(int)eTextures::negY] = "caulk";
+
+	WriteBrush(brush, ibrushIndex, textures);
+
 
 	WriteLightGrid();
 	WriteMapBarriers();
