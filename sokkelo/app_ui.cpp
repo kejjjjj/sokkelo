@@ -97,7 +97,7 @@ void AppUI::Render()
 
 	if (!ui.bThreadActive) {
 		if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
-			CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze.map", &ui, 256);
+			CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze2.map", &ui, 256);
 			cod4.BeginConversion();
 		}
 		if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
@@ -113,7 +113,7 @@ void AppUI::Render()
 		size_t i = 0;
 		for (auto& cell : ui.vCells) {
 
-			if (cell.bBacktraced) {
+			if (cell.bDeadend) {
 				Draw(cell.vPos, COL::BLUE);
 
 			}

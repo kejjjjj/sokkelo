@@ -15,7 +15,8 @@ void Maze::PopulateCells()
 			cell.iIndex = cellIdx;
 			cell.vPos = ImVec2(x, y);
 			cell.bBacktraced = false;
-			cell.bAlreadyMerged = false;
+			cell.bDeadend = false;
+			//cell.bAlreadyMerged = false;
 			//cell.vNeighbors.fill(nullptr);
 
 			vCells.push_back(cell);
@@ -214,6 +215,7 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 
 		sCurrentCell = stack.back();
 		sCurrentCell->bVisited = true;
+		sCurrentCell->bWall = false;
 		//sCurrentCell->bBacktraced = true;
 		stack.pop_back();
 
@@ -247,6 +249,7 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 
 			//Mark the chosen cell as visited and push it to the stack
 			sChosenCell->bVisited = true;
+			sChosenCell->bWall = false;
 			stack.push_back(sChosenCell);
 
 
@@ -255,6 +258,43 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 		//	std::this_thread::sleep_for(500us);
 		
 
+	}
+	sCell* sc;
+	eDir dir;
+	for (auto& cell : vCells) {
+		if (cell.bWall)
+			continue;
+
+		int neighbors = 0;
+
+		sc = GetCellNeigbor(cell, eDir::N, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::N; }
+		sc = GetCellNeigbor(cell, eDir::E, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::E; }
+		sc = GetCellNeigbor(cell, eDir::S, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::S; }
+		sc = GetCellNeigbor(cell, eDir::W, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::W; }
+
+		if (neighbors == 1) {
+			if (cell.iIndex != 0 && cell.iIndex != vCells.size() - 1) {
+				cell.bDeadend = true;
+
+				switch (dir) {
+				case eDir::N:
+					cell.fDeadendAngle = 270;
+					break;
+				case eDir::E:
+					cell.fDeadendAngle = 0;
+					break;
+				case eDir::S:
+					cell.fDeadendAngle = 90;
+					break;
+				case eDir::W:
+					cell.fDeadendAngle = 180;
+					break;
+				default:
+					break;
+				}
+
+			}
+		}
 	}
 	bThreadActive = false;
 
@@ -327,12 +367,15 @@ void Maze::AldousBroderAlgorithm(const int& index)
 
 			//Mark the chosen neighbour as visited.
 			sChosenCell->bVisited = true;
+			sChosenCell->bWall = false;
 			--neighbors_left_to_visit;
 			++visited_cells;
 			looped = 0;
 		}
-		else
+		else {
 			looped++;
+		}
+
 		
 
 		if (looped > 10000000)
@@ -340,9 +383,48 @@ void Maze::AldousBroderAlgorithm(const int& index)
 
 		//Make the chosen neighbour the current cell.
 		sCurrentCell = sChosenCell;
+		
 
 		//if (!backtraced)
 		//	std::this_thread::sleep_for(50us);
+	}
+
+	sCell* sc;
+	eDir dir;
+	for (auto& cell : vCells) {
+		if (cell.bWall)
+			continue;
+
+		int neighbors = 0;
+
+		sc = GetCellNeigbor(cell, eDir::N, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::N; }
+		sc = GetCellNeigbor(cell, eDir::E, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::E; }
+		sc = GetCellNeigbor(cell, eDir::S, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::S; }
+		sc = GetCellNeigbor(cell, eDir::W, false); if (sc) if (!sc->bWall) { neighbors++; dir = eDir::W; }
+
+		if (neighbors == 1) {
+			if (cell.iIndex != 0 && cell.iIndex != vCells.size() - 1) {
+				cell.bDeadend = true;
+
+				switch (dir) {
+				case eDir::N:
+					cell.fDeadendAngle = 270;
+					break;
+				case eDir::E:
+					cell.fDeadendAngle = 0;
+					break;
+				case eDir::S:
+					cell.fDeadendAngle = 90;
+					break;
+				case eDir::W:
+					cell.fDeadendAngle = 180;
+					break;
+				default:
+					break;
+				}
+
+			}
+		}
 	}
 
 	bThreadActive = false;

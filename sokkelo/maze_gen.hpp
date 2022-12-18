@@ -29,7 +29,9 @@ public:
 		bool bWall; //current cell is a wall
 		bool bBacktraced; //deadend
 		ImVec2 vPos; //position in the grid
-		bool bAlreadyMerged; //
+		//bool bAlreadyMerged; //
+		bool bDeadend; //has only one corridor neighbor
+		float fDeadendAngle;
 	};
 	std::thread generation_thread;
 	void StartGeneration();

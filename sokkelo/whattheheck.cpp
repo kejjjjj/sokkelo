@@ -37,7 +37,7 @@ void CoD4::CellToBounds(const Maze::sCell* cell, brush_t& brush)
 	
 	brush.origin[0] = (pos.x * brushsize);
 	brush.origin[1] = (pos.y * brushsize);
-	brush.origin[2] = brushsize / 2;
+	brush.origin[2] = 0;
 
 
 	brush.mins[0] = brush.origin[0] - length;
@@ -68,8 +68,8 @@ void CoD4::CellsToBounds(Maze::sCell* cell, brush_t& brush, std::vector<Maze::sC
 
 	++it;
 
-	if (it->bAlreadyMerged)
-		return;
+	//if (it->bAlreadyMerged)
+	//	return;
 
 
 	if (it >= ui.vCells.end()-1)
@@ -107,14 +107,28 @@ void CoD4::CellsToBounds(Maze::sCell* cell, brush_t& brush, std::vector<Maze::sC
 		backup = b2;
 		times_looped++;
 		ADD += brushsize;
-		it->bAlreadyMerged = true;
+		//it->bAlreadyMerged = true;
 	}
 
 	brush.maxs[!index] += ADD;
-	cell->bAlreadyMerged = true;
+	//cell->bAlreadyMerged = true;
 	
 }
 void CoD4::WriteBrush(const brush_t& brush, const int brushIndex, std::array<const char*, 6>& textures)
+{
+
+
+	f << "// brush " << brushIndex << std::endl;
+	f << "{\n";
+
+	WriteBrushContents(brush, textures);
+
+	f << "}\n";
+
+	ibrushIndex++;
+
+}
+void CoD4::WriteBrushContents(const brush_t& brush, std::array<const char*, 6>& textures)
 {
 	float brush_1[3][3];
 	float brush_2[3][3];
@@ -208,10 +222,6 @@ void CoD4::WriteBrush(const brush_t& brush, const int brushIndex, std::array<con
 		brush_6[2][2] = mins[2];
 	}
 
-
-	f << "// brush " << brushIndex << std::endl;
-	f << "{\n";
-
 	//THIS IS BOTTOM [1][2]
 	f << std::fixed << " ( " << brush_1[0][0] << " " << brush_1[0][1] << " " << brush_1[0][2] << " )";
 	f << std::fixed << " ( " << brush_1[1][0] << " " << brush_1[1][1] << " " << brush_1[1][2] << " )";
@@ -237,11 +247,6 @@ void CoD4::WriteBrush(const brush_t& brush, const int brushIndex, std::array<con
 	f << std::fixed << " ( " << brush_6[0][0] << " " << brush_6[0][1] << " " << brush_6[0][2] << " )";
 	f << std::fixed << " ( " << brush_6[1][0] << " " << brush_6[1][1] << " " << brush_6[1][2] << " )";
 	f << std::fixed << " ( " << brush_6[2][0] << " " << brush_6[2][1] << " " << brush_6[2][2] << " ) " << textures[(int)eTextures::posX] << " 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0\n";
-
-
-	f << "}\n";
-
-	ibrushIndex++;
 
 }
 void CoD4::WriteLightGrid()
@@ -442,28 +447,112 @@ void CoD4::WriteSkybox()
 
 
 }
+
+void CoD4::WriteEntity(const vec3_t origin, const std::string_view& classname, vec3_t angles, const bool useAngles)
+{
+	f << "// entity " << ientityIndex << '\n';
+	f << "{\n";
+
+	f << "\"origin\" \"" << origin[0] << ' ' << origin[1] << ' ' << origin[2] << "\"\n";
+	if (useAngles)
+		f << "\"angles\" \"" << angles[0] << ' ' << angles[1] << ' ' << angles[2] << "\"\n";
+
+	f << "\"classname\" \"" << classname << "\"\n";
+
+	f << "}\n";
+
+	ientityIndex++;
+}
+void CoD4::WriteEntityModel(const vec3_t origin, const std::string_view& classname, vec3_t angles, const bool useAngles)
+{
+	f << "// entity " << ientityIndex << '\n';
+	f << "{\n";
+
+	f << "\"origin\" \"" << origin[0] << ' ' << origin[1] << ' ' << origin[2] << "\"\n";
+	if (useAngles)
+		f << "\"angles\" \"" << angles[0] << ' ' << angles[1] << ' ' << angles[2] << "\"\n";
+
+	f << "\"model\" \"" << classname << "\"\n";
+
+
+	f << "\"classname\" \"" << "misc_model" << "\"\n";
+
+	f << "}\n";
+
+	ientityIndex++;
+}
+void CoD4::WriteEntityLight(const vec3_t origin, vec3_t color, float radius, float intensity)
+{
+	f << "// entity " << ientityIndex << '\n';
+	f << "{\n";
+	f << "\"origin\" \"" << origin[0] << ' ' << origin[1] << ' ' << origin[2] << "\"\n";
+	f << "\"def\" \"light_point_linear" << "" << "\"\n";
+	f << "\"radius\" \"" << radius << "\"\n";
+	f << "\"_color\" \"" << color[0] << ' ' << color[1] << ' ' << color[2] << "\"\n";
+	f << "\"intensity\" \"" << intensity << "\"\n";
+	f << "\"classname\" \"" << "light" << "\"\n";
+	f << "}\n";
+
+	ientityIndex++;
+}
+void CoD4::WriteTrigger(const brush_t& brush, const std::string_view& hintstring)
+{
+	f << "// entity " << ientityIndex << '\n';
+	f << "{\n";
+
+
+	f << "\"hintstring\" \"" << hintstring << "\"\n";
+
+	f << "\"classname\" \"" << "trigger_use_touch" << "\"\n";
+
+	std::array<const char*, 6> textures = {"trigger" ,"trigger", "trigger", "trigger", "trigger", "trigger"};
+
+	WriteBrush(brush, 0, textures);
+
+	f << "}\n";
+	ientityIndex++;
+
+
+}
 void CoD4::WriteEntities()
 {
-	const auto WriteEntity = [this](const int32_t entityIndex, const vec3_t origin, const std::string_view& classname, vec3_t angles = {}, const bool useAngles = false) -> void
-	{
-		f << "// entity " << entityIndex << '\n';
-		f << "{\n";
 
-		f << "\"origin\" \"" << origin[0] << ' ' << origin[1] << ' ' << origin[2] << "\"\n";
-		if (useAngles)
-			f << "\"angles\" \"" << angles[0] << ' ' << angles[1] << ' ' << angles[2] << "\"\n";
-
-		f << "\"classname\" \"" << classname << "\"\n";
-
-		f << "}\n";
-
-	};
-
-	brush_t firstBrush;
+	brush_t firstBrush, triggerBrush;
 
 	CellToBounds(&ui.vCells[0], firstBrush);
 
 	vec3_t origin, angles;
+	vec3_t trig_mins, trig_maxs;
+
+
+
+	VectorCopy(firstBrush.mins, triggerBrush.mins);
+	VectorCopy(firstBrush.maxs, triggerBrush.maxs);
+
+	triggerBrush.mins[2] = triggerBrush.maxs[2];
+	triggerBrush.maxs[2] = triggerBrush.mins[2] + 16;
+
+	char buff[256];
+
+	sprintf_s(buff, "This is an auto-generated maze of size ^2%dx%d^7, blocksize: ^2%.1f ^7units! The end platform is marked with a black and red texture", ui.iPixelsPerAxis.x, ui.iPixelsPerAxis.y, brushsize);
+
+	std::string hintstring = buff;
+
+	WriteTrigger(triggerBrush, hintstring);
+
+
+	CellToBounds(&ui.vCells[ui.vCells.size() -1 ], triggerBrush);
+
+	triggerBrush.mins[2] = triggerBrush.maxs[2];
+	triggerBrush.maxs[2] = triggerBrush.mins[2] + 16;
+
+	sprintf_s(buff, "Congratulations! You travelled approximately ^2%.1f ^7units to get here", sqrt(firstBrush.origin[0] * firstBrush.origin[0] + triggerBrush.origin[0] * triggerBrush.origin[1]));
+
+	hintstring = buff;
+
+	WriteTrigger(triggerBrush, hintstring);
+
+
 
 	origin[0] = firstBrush.origin[0];
 	origin[1] = firstBrush.origin[1];
@@ -473,16 +562,36 @@ void CoD4::WriteEntities()
 	angles[1] = 0;
 	angles[2] = 0;
 
-	WriteEntity(1, origin, "mp_dm_spawn", angles, true);
+	WriteEntity(origin, "mp_dm_spawn", angles, true);
 
 	origin[2] += 96;
 
-	WriteEntity(2, origin, "mp_global_intermission");
+	WriteEntity(origin, "mp_global_intermission");
 
 	origin[2] += 24;
 
-	WriteEntity(3, origin, "reflection_probe");
+	WriteEntity(origin, "reflection_probe");
 
+	auto begin = ui.vCells.begin();
+	auto end = ui.vCells.end();
+
+
+	//spawn farmers to each deadend
+	//spawn a red light above them
+	for (auto it = begin; it != end; ++it) {
+
+		if (!it->bDeadend)
+			continue;
+
+
+		brush_t brush;
+		CellToBounds(&*it, brush);
+
+	
+		WriteEntityModel(brush.origin, "character_russian_farmer", vec3_t{ 0, it->fDeadendAngle, 0 }, true);
+		brush.origin[2] += 80;
+		WriteEntityLight(brush.origin, vec3_t{ 1,0,0 }, 300, 1.f);
+	}
 
 
 }
@@ -503,6 +612,7 @@ void CoD4::BeginConversion()
 	brush_t brush;
 
 	ibrushIndex = 0;
+	ientityIndex = 1;
 
 	std::array<const char*, 6> textures;
 
@@ -512,7 +622,6 @@ void CoD4::BeginConversion()
 	auto end = ui.vCells.end();
 
 
-	std::vector<Maze::sCell>::iterator a;
 	int i = 0;
 	for (auto it = begin; it != end; ++it) {
 
@@ -547,6 +656,7 @@ void CoD4::BeginConversion()
 			textures[(int)eTextures::posZ] = "icbm_freightelevator";
 
 		}
+
 		i++;
 		WriteBrush(brush, ibrushIndex, textures);
 	}
