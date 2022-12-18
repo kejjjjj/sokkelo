@@ -66,6 +66,7 @@ typedef vec_t vec4_t[4];
 
 #include "app_ui.hpp"
 #include "maze_gen.hpp"
+#include "solution.hpp"
 
 #include "timing.hpp"
 

@@ -2,7 +2,7 @@
 
 //PURPOSE:
 //converts the finished maze map into a Call of Duty 4 Radiant .map file
-//yes...
+//not coded to be very safe or efficient..
 
 #ifndef cod4rad
 #define cod4rad
@@ -63,8 +63,8 @@ private:
 	std::fstream f;
 	const Maze* mazedata;
 	float brushsize = 512;
-	size_t ibrushIndex;
-	size_t ientityIndex;
+	size_t ibrushIndex = 0;
+	size_t ientityIndex = 0;
 };
 
 

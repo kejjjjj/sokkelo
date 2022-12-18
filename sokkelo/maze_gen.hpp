@@ -32,6 +32,7 @@ public:
 		//bool bAlreadyMerged; //
 		bool bDeadend; //has only one corridor neighbor
 		float fDeadendAngle;
+		bool bPathLeadsToDeadend; //following this tile will take you to a deadend, assuming you aren't backtracking
 	};
 	std::thread generation_thread;
 	void StartGeneration();

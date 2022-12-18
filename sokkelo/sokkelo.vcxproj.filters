@@ -114,6 +114,9 @@
     <ClInclude Include="basetabs.hpp">
       <Filter>Source Files\window</Filter>
     </ClInclude>
+    <ClInclude Include="solution.hpp">
+      <Filter>Source Files\Application</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sokkelo.cpp">
@@ -178,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="basetabs.cpp">
       <Filter>Source Files\window</Filter>
+    </ClCompile>
+    <ClCompile Include="solution.cpp">
+      <Filter>Source Files\Application</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
