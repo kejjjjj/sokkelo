@@ -29,8 +29,28 @@ public:
 	}
 	void Clear(const ImVec4& col) { gui::DrawRectangleFilled(real_mins, real_maxs, col); };
 
-	ImVec2 GetWindowPos() const { return real_mins; }
-	ImVec2 GetWindowSize() const { return ImVec2(real_maxs.x - real_mins.x, real_maxs.y - real_mins.y); }
+
+	ImVec2 GetWindowPos() const noexcept { return real_mins; }
+	ImVec2 GetWindowSize() const noexcept { return ImVec2(real_maxs.x - real_mins.x, real_maxs.y - real_mins.y); }
+	int32_t GetHorzCenter() const noexcept { return real_maxs.x - (real_maxs.x - real_mins.x) / 2; }
+	ImVec2 GetContentRegionAvail() const { 
+		const ImGuiWindow* wnd = ImGui::GetCurrentWindow(); 
+	
+		return ImVec2(real_maxs.x - wnd->DC.CursorPos.x, real_maxs.y - wnd->DC.CursorPos.y);
+	}
+	bool ButtonCentered(const char* label, float alignment = 0.5f, ImVec2 _size = ImVec2(0,0))
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		float size = ImGui::CalcTextSize(label).x * 1.5f + style.FramePadding.x * 2.0f;
+		float avail = GetContentRegionAvail().x;
+
+		float off = (avail - size) * alignment;
+		if (off > 0.0f)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+		return ImGui::Button(label, _size);
+	}
 
 
 	bool bIsConstructed = 0;

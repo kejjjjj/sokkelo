@@ -92,7 +92,57 @@ void MW::RenderTabBar()
 			ImGui::EndMenu();
 
 		}
+		if (ImGui::BeginMenu("Export")) {
+
+			if (ui.vCells.empty())
+				ImGui::BeginDisabled();
+
+			ButtonAction("Export to Radiant", []()
+				{
+					CoD4(RADIANT_EXPORT_PATH, EXPORT_BRUSHSIZE).BeginConversion();
+				});
+
+			if (ui.vCells.empty())
+				ImGui::EndDisabled();
+
+			ButtonAction("Settings", []()
+				{
+					DRAW_EXPORT_WINDOW = !DRAW_EXPORT_WINDOW;
+				});
+
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Settings")) {
+
+			ImGui::PushItemWidth(125);
+			if (ImGui::SliderFloat("GRID", &VIEWPORT_GRID, 0.01f, 100, "%.3f")) UPDATE_VIEWPORT = true;
+			ImGui::PushItemWidth(125);
+			if(ImGui::SliderFloat("Size X", &VIEWPORT_SIZE.x, 1, 1920, "%.0f")) UPDATE_VIEWPORT = true;
+			ImGui::PushItemWidth(125);
+			if(ImGui::SliderFloat("Size Y", &VIEWPORT_SIZE.y, 1, 1920, "%.0f")) UPDATE_VIEWPORT = true;
+
+			ImGui::Checkbox("Draw dead-ends", &SOLUTION_DRAW_DEADENDS);
+
+			ImGui::EndMenu();
+
+		}
 
 	}ImGui::EndMenuBar();
+
+}
+
+
+void MW::RenderExportSettings()
+{
+	ImGui::NewLine();
+	ImGui::TextColored(ImVec4(170, 170, 170, 255), "Include  file  name  in  the  path  as  well");
+	ImGui::InputText("Export path", RADIANT_EXPORT_PATH, MAX_PATH);
+	ImGui::PushItemWidth(175);
+	ImGui::InputFloat("Brush size", &EXPORT_BRUSHSIZE);
+	ImGui::Checkbox("Farmer  at  each  dead-end", &EXPORT_DEADEND_STUFF);
+	ImGui::Checkbox("Rising  walls", &EXPORT_RISING_WALLS);
+
+	if (ImGui::ButtonCentered("Exit", 0.2f))
+		DRAW_EXPORT_WINDOW = false;
 
 }

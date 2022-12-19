@@ -165,6 +165,11 @@ Maze::eMazeAlgorithm Maze::GetAlgorithm()
 }
 void Maze::StartGeneration()
 {
+	if (iPixelsPerAxis.x % 2 == 0 || iPixelsPerAxis.y % 2 == 0) {
+		MessageBoxA(NULL, "X and Y size must be odd numbers", "Error!", MB_ICONASTERISK);
+		return;
+	}
+
 	bFinished = false;
 	switch (algorithm) {
 	case eMazeAlgorithm::Depth_First:
@@ -179,6 +184,7 @@ void Maze::StartGeneration()
 		break;
 	}
 
+	solution.OnExit();
 
 }
 void Maze::IterativeGenerationWrapper(const int& index)
@@ -262,9 +268,10 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 
 		}
 		//if (!backtraced)
-		//	std::this_thread::sleep_for(500us);
-		
+		//	std::this_thread::sleep_for(1us);
 
+		
+		
 	}
 	sCell* sc;
 	eDir dir;
@@ -391,9 +398,8 @@ void Maze::AldousBroderAlgorithm(const int& index)
 		//Make the chosen neighbour the current cell.
 		sCurrentCell = sChosenCell;
 		
-
 		//if (!backtraced)
-		//	std::this_thread::sleep_for(50us);
+		//	std::this_thread::sleep_for(1us);
 	}
 
 	sCell* sc;
@@ -444,6 +450,7 @@ void Maze::KillGeneration()
 	//ui.generation_thread.~thread();
 	Sleep(1);
 	vCells.clear();
+	vCells.resize(0);
 
 
 }

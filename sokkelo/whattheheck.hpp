@@ -9,6 +9,11 @@
 
 #include "sokkelo.h"
 
+inline char RADIANT_EXPORT_PATH[MAX_PATH];
+inline bool DRAW_EXPORT_WINDOW = false;
+inline float EXPORT_BRUSHSIZE = 512;
+inline bool EXPORT_DEADEND_STUFF = true;
+inline bool EXPORT_RISING_WALLS = false;
 struct CoD4
 {
 
@@ -33,9 +38,8 @@ struct CoD4
 
 	};
 
-	CoD4(const std::string_view& dir, const Maze* _mazedata, const float _brushsize = 512) : 
+	CoD4(const std::string_view& dir, const float _brushsize) : 
 		path(dir), 
-		mazedata(_mazedata),
 		brushsize(_brushsize) {};
 
 	~CoD4() { fs::F_CloseFile(f); }
@@ -61,7 +65,6 @@ struct CoD4
 private:
 	std::string_view path;
 	std::fstream f;
-	const Maze* mazedata;
 	float brushsize = 512;
 	size_t ibrushIndex = 0;
 	size_t ientityIndex = 0;

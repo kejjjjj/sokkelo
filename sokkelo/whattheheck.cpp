@@ -49,11 +49,13 @@ void CoD4::CellToBounds(const Maze::sCell* cell, brush_t& brush)
 	brush.maxs[1] = brush.origin[1] + length;
 	brush.maxs[2] = maxs;
 
-	//if (!brush.bWalkable) {
-	//	brush.maxs[2] = sqrt(brush.origin[0] * brush.origin[0] + brush.origin[1] * brush.origin[1]) / 5;
-	//	if(brush.maxs[2] < brushsize)
-	//		brush.maxs[2] = brushsize;
-	//}
+	if (EXPORT_RISING_WALLS) {
+		if (!brush.bWalkable) {
+			brush.maxs[2] = sqrt(brush.origin[0] * brush.origin[0] + brush.origin[1] * brush.origin[1]) / 5;
+			if (brush.maxs[2] < brushsize)
+				brush.maxs[2] = brushsize;
+		}
+	}
 
 }
 void CoD4::CellsToBounds(Maze::sCell* cell, brush_t& brush, std::vector<Maze::sCell>::iterator& it)
@@ -578,29 +580,31 @@ void CoD4::WriteEntities()
 
 	//spawn farmers to each deadend
 	//spawn a red light above them
-	for (auto it = begin; it != end; ++it) {
+	if (EXPORT_DEADEND_STUFF) {
+		for (auto it = begin; it != end; ++it) {
 
-		if (!it->bDeadend)
-			continue;
+			if (!it->bDeadend)
+				continue;
 
 
-		brush_t brush;
-		CellToBounds(&*it, brush);
+			brush_t brush;
+			CellToBounds(&*it, brush);
 
-	
-		WriteEntityModel(brush.origin, "character_russian_farmer", vec3_t{ 0, it->fDeadendAngle, 0 }, true);
-		brush.origin[2] += 80;
-		WriteEntityLight(brush.origin, vec3_t{ 1,0,0 }, 300, 1.f);
+
+			WriteEntityModel(brush.origin, "character_russian_farmer", vec3_t{ 0, it->fDeadendAngle, 0 }, true);
+			brush.origin[2] += 80;
+			WriteEntityLight(brush.origin, vec3_t{ 1,0,0 }, 300, 1.f);
+		}
 	}
 
 
 }
 void CoD4::BeginConversion()
 {
-	if (!mazedata) {
-		FatalError("BeginConversion(): called with invalid maze data");
-		return;
-	}
+	//if (!mazedata) {
+	//	FatalError("BeginConversion(): called with invalid maze data");
+	//	return;
+	//}
 
 	if (!fs::F_OpenFile(f, path, fs::fileopen::FILE_OUT)) {
 		FatalError("CoD4::BeginConversion(): can't open file for OUT operation! Error: ", fs::_GetLastError());

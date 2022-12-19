@@ -15,11 +15,14 @@ void Solution::Initialize()
 	sCurrentTile = &ui.vCells.front();
 	vFinishPath.clear();
 	vCurrentCorridor.clear();
+	vPossiblePaths.clear();
+	
 	bFinished = false;
 	bInitialized = true;
 }
 void Solution::DoStuffWrapper()
 {
+	
 	return solution.DoStuff();
 }
 void Solution::DoStuff()
@@ -29,12 +32,14 @@ void Solution::DoStuff()
 
 	//std::chrono::time_point<std::chrono::system_clock> old = std::chrono::system_clock::now();
 
-	while (!bFinished) {
+	while (!bFinished && bInitialized) {
 
 		if (EvaluateNextMove()) {
 			vCurrentCorridor.push_back(sCurrentTile);
 			vFinishPath.push_back(sCurrentTile);
+			//std::this_thread::sleep_for(1ns);
 		}
+		
 	}
 	//std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 	//std::chrono::duration<double> difference = now - old;
@@ -56,7 +61,21 @@ void Solution::Restart()
 	vFinishPath.resize(0);
 	
 }
-
+void Solution::OnExit()
+{
+	vEndTile = ImVec2();
+	sCurrentTile = 0;
+	sPreviousTile = 0;
+	iGenerations = 0;
+	vCurrentCorridor.clear();
+	vCurrentCorridor.resize(0);
+	vFinishPath.clear();
+	vFinishPath.resize(0);
+	vPossiblePaths.clear();
+	vPossiblePaths.resize(0);
+	bFinished = false;
+	bInitialized = false;
+}
 bool Solution::EvaluateNextMove()
 {
 

@@ -88,29 +88,35 @@ void AppUI::Render()
 		return;
 	}
 
+	ImGui::NewLine();
 
-	if (GetAsyncKeyState(VK_NUMPAD5) & 1) {
+	if (ui.bThreadActive) { ImGui::BeginDisabled(); }
+
+
+	if (ButtonCentered("Generate", 0.45f)) {
+		ui.StartGeneration();
+	}
+
+	if (ui.bThreadActive) { ImGui::EndDisabled(); }
+
+
+	if (!ui.bFinished) {ImGui::BeginDisabled();}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Solve")) {
 		if (!solution.Initialized() && ui.bFinished) {
+			solution.OnExit();
 			solution.Initialize();
 		}
 		std::thread(solution.DoStuffWrapper).detach();
 		Sleep(100);
 	}
 
-	const int horzPixels = iPixelsPerAxis.x;
-	const int vertPixels = iPixelsPerAxis.y;
+	if (!ui.bFinished) {ImGui::EndDisabled();}
 
 
-	if (!ui.bThreadActive) {
-		if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
-			CoD4 cod4("C:\\Users\\Luukas\\Desktop\\mp_maze2.map", &ui, 256);
-			cod4.BeginConversion();
-		}
-		if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
-			ui.StartGeneration();
-		}
-	}
-	ImGui::Text("Pixels (%i, %i)\naspectRatio: %.2f", iPixelsPerAxis.x, iPixelsPerAxis.y, fAspectRatio);
+	ImGui::Text("Size (%i, %i) - Algorithm: %s", iPixelsPerAxis.x, iPixelsPerAxis.y, ui.GetAlgorithm() == Maze::eMazeAlgorithm::Depth_First ? "Depth-first" : "Aldous-Broder");
 
 	Clear(COL::BLACK);
 
@@ -119,8 +125,7 @@ void AppUI::Render()
 		size_t i = 0;
 		for (auto& cell : ui.vCells) {
 
-
-			if (cell.bPathLeadsToDeadend) {
+			if (cell.bPathLeadsToDeadend && SOLUTION_DRAW_DEADENDS) {
 				Draw(cell.vPos, COL::RED);
 
 			}
@@ -131,15 +136,11 @@ void AppUI::Render()
 				Draw(cell.vPos, COL::BLACK);
 
 			}
-			//if (solution.Initialized()) {
-			//	for (auto& i : solution.vCurrentCorridor) {
-			//		Draw(i->vPos, ImVec4(255, 0, 255, 255));
-			//	}
-			//	//if(solution.sPreviousTile)
-			//	//	Draw(solution.sPreviousTile->vPos, ImVec4(255, 0, 0, 255));
-			//	Draw(solution.sCurrentTile->vPos, ImVec4(0, 255, 0, 255));
-			//}
 			i++;
+		}
+		if (solution.Initialized()) {
+			Draw(solution.sCurrentTile->vPos, ImVec4(255, 0, 255, 255));
+
 		}
 		if (solution.Finished()) {
 			for (const auto& i : solution.vFinishPath) {
@@ -172,5 +173,7 @@ void AppUI::Render()
 	}
 
 	ImGui::Dummy(ImVec2(real_maxs.x - real_mins.x, real_maxs.y - real_mins.y + 10));
+
+	ImGui::Text("Generations: %u", solution.iGenerations);
 
 }

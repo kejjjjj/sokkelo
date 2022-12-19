@@ -4,8 +4,7 @@
 // Changelog:
 // - v0.10: Initial version. Added InputText() / InputTextMultiline() calls with std::string
 
-#include "imgui.h"
-#include "imgui_stdlib.h"
+#include "../sokkelo.h"
 
 struct InputTextCallback_UserData
 {
@@ -69,4 +68,53 @@ bool ImGui::InputTextWithHint(const char* label, const char* hint, std::string* 
     cb_user_data.ChainCallback = callback;
     cb_user_data.ChainCallbackUserData = user_data;
     return InputTextWithHint(label, hint, (char*)str->c_str(), str->capacity() + 1, flags, InputTextCallback, &cb_user_data);
+}
+bool ImGui::ButtonCentered(const char* label, float alignment, ImVec2 _size)
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
+    float avail = ImGui::GetContentRegionAvail().x;
+
+    float off = (avail - size) * alignment;
+    if (off > 0.0f)
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+    return ImGui::Button(label, _size);
+}
+void ImGui::TextCentered(const char* label, ...)
+{
+    char v2[4096];
+    va_list va;
+
+    va_start(va, label);
+    _vsnprintf_s(v2, 0x1000u, label, va);
+    v2[4095] = 0;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    float size = ImGui::CalcTextSize(v2).x + style.FramePadding.x * 2.0f;
+    float avail = ImGui::GetContentRegionAvail().x;
+
+    float off = (avail - size) * .5f;
+    if (off > 0.0f)
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+    ImGui::Text(v2);
+}
+bool ImGui::IsHovered(ImVec2 mins, ImVec2 maxs)
+{
+    tagPOINT p;
+    GetCursorPos(&p);
+
+    return (
+        p.x > mins.x
+        && p.y > mins.y
+        && p.x < maxs.x
+        && p.y < maxs.y);
+
+}
+bool ImGui::IsClicked(ImVec2 mins, ImVec2 maxs)
+{
+    return IsHovered(mins, maxs) && GetIO().MouseDownDuration[0] == 0.f;
 }

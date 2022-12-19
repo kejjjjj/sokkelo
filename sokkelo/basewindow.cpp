@@ -175,7 +175,9 @@ LRESULT WINAPI MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
                 //SetWindowPos(hWnd_main.GetWindowHandle(), NULL, rect.left, rect.top, width, height, 0);
                 ui.bIsConstructed = false;
+                solution.OnExit();
                 ui.KillGeneration();
+
             }
         }
         return 0;
@@ -215,15 +217,20 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     MW::RenderTabBar();
 
-    static float gridsize = 106.39f;
-
-    if (!ui.IsConstructed() || ImGui::SliderFloat("gridsize", &gridsize, 1, 1024, "%.2f")) {
-        ui.KillGeneration();
-        ui.Construct(ImVec2(hWnd_main.window.Pos.x+10, hWnd_main.window.Pos.y + 200), 1500, 800, gridsize, true);
+    if (DRAW_EXPORT_WINDOW) {
+        MW::RenderExportSettings();
     }
-    ui.Render();
-    ImGui::Text("hello from below");
+    else {
+        static float gridsize = 106.39f;
 
+        if (!ui.IsConstructed() || UPDATE_VIEWPORT) {
+            solution.OnExit();
+            ui.KillGeneration();
+            ui.Construct(ImVec2(hWnd_main.window.Pos.x + 10, hWnd_main.window.Pos.y + 200), VIEWPORT_SIZE.x, VIEWPORT_SIZE.y, VIEWPORT_GRID, true);
+            UPDATE_VIEWPORT = false;
+        }
+        ui.Render();
+    }
     window.active = ImGui::IsWindowFocused();
 
     ImGui::SetWindowSize(hWnd_main.window.Size);
