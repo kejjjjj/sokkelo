@@ -215,11 +215,11 @@ bool MainWindow::Render(ImGuiIO& io, MSG& msg)
 
     MW::RenderTabBar();
 
-    static float gridsize = 3.52f;
+    static float gridsize = 106.39f;
 
     if (!ui.IsConstructed() || ImGui::SliderFloat("gridsize", &gridsize, 1, 1024, "%.2f")) {
         ui.KillGeneration();
-        ui.Construct(ImVec2(hWnd_main.window.Pos.x+10, hWnd_main.window.Pos.y + 200), 720, 720, gridsize, true);
+        ui.Construct(ImVec2(hWnd_main.window.Pos.x+10, hWnd_main.window.Pos.y + 200), 1500, 800, gridsize, true);
     }
     ui.Render();
     ImGui::Text("hello from below");

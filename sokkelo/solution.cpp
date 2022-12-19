@@ -11,85 +11,145 @@ void Solution::SolveTheMaze()
 void Solution::Initialize()
 {
 	iGenerations = NULL;
-	vEndTile = vCells.back().vPos;
-	sCurrentTile = &vCells.front();
+	vEndTile = ui.vCells.back().vPos;
+	sCurrentTile = &ui.vCells.front();
+	vFinishPath.clear();
+	vCurrentCorridor.clear();
 	bFinished = false;
+	bInitialized = true;
 }
+void Solution::DoStuffWrapper()
+{
+	return solution.DoStuff();
+}
+void Solution::DoStuff()
+{
+	if (!Initialized() || bFinished)
+		return;
 
+	//std::chrono::time_point<std::chrono::system_clock> old = std::chrono::system_clock::now();
+
+	while (!bFinished) {
+
+		if (EvaluateNextMove()) {
+			vCurrentCorridor.push_back(sCurrentTile);
+			vFinishPath.push_back(sCurrentTile);
+		}
+	}
+	//std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+	//std::chrono::duration<double> difference = now - old;
+
+
+	//printf("time taken: %.12f\n", difference.count());
+
+	//Sleep(1);
+}
 //restarts the search, but everytime this is called, the AI is more knowledgeable of the route
 void Solution::Restart()
 {
-
+	vEndTile = ui.vCells.back().vPos;
+	sCurrentTile = &ui.vCells.front();
+	iGenerations++;
+	vCurrentCorridor.clear();
+	vCurrentCorridor.resize(0);
+	vFinishPath.clear();
+	vFinishPath.resize(0);
+	
 }
 
-const Maze::sCell* Solution::EvaluateNextMove()
+bool Solution::EvaluateNextMove()
 {
 
 	if (!GetPossiblePaths()) {
 		//currently at a deadend
 		//mark all cells in this corridor as deadends
-		std::for_each(vCurrentCorridor.begin(), vCurrentCorridor.end(), [](sCell* cell) {cell->bPathLeadsToDeadend = true; });
+		std::for_each(vCurrentCorridor.begin(), vCurrentCorridor.end(), [](Maze::sCell* cell) {cell->bPathLeadsToDeadend = true; });
 
 		Restart();
+		return false;
 	}
 
 	//evaluate which path should be taken
 
-	return GuessBestPath();
+	sCurrentTile = GuessBestPath();
 
+	if (sCurrentTile == &ui.vCells.back()) {
+		std::cout << "YEP!\n";
+		bFinished = true;
+	}
 
+	return true;
 }
 bool Solution::GetPossiblePaths()
 {
-	sCell* sc;
+	Maze::sCell* sc;
 
 	vPossiblePaths.clear();
-	vPossiblePaths.resize(1);
+	vPossiblePaths.resize(0);
 
 	//find a neighbor
 	//if it is not a wall: store it
-	sc = GetCellNeigbor(*sCurrentTile, eDir::N, false); if (sc) if (!sc->bWall) { vPossiblePaths.push_back(eDir::N); }
-	sc = GetCellNeigbor(*sCurrentTile, eDir::E, false); if (sc) if (!sc->bWall) { vPossiblePaths.push_back(eDir::E); }
-	sc = GetCellNeigbor(*sCurrentTile, eDir::S, false); if (sc) if (!sc->bWall) { vPossiblePaths.push_back(eDir::S); }
-	sc = GetCellNeigbor(*sCurrentTile, eDir::W, false); if (sc) if (!sc->bWall) { vPossiblePaths.push_back(eDir::W); }
+	sc = sCurrentTile->vAllNeighbors[(int)Maze::eDir::N]; if (sc) if (!sc->bWall && !sc->bPathLeadsToDeadend && sc != sPreviousTile) { vPossiblePaths.push_back(Maze::eDir::N); }
+	sc = sCurrentTile->vAllNeighbors[(int)Maze::eDir::E]; if (sc) if (!sc->bWall && !sc->bPathLeadsToDeadend && sc != sPreviousTile) { vPossiblePaths.push_back(Maze::eDir::E); }
+	sc = sCurrentTile->vAllNeighbors[(int)Maze::eDir::S]; if (sc) if (!sc->bWall && !sc->bPathLeadsToDeadend && sc != sPreviousTile) { vPossiblePaths.push_back(Maze::eDir::S); }
+	sc = sCurrentTile->vAllNeighbors[(int)Maze::eDir::W]; if (sc) if (!sc->bWall && !sc->bPathLeadsToDeadend && sc != sPreviousTile) { vPossiblePaths.push_back(Maze::eDir::W); }
 
-	return vPossiblePaths.size() > 1;
+	return vPossiblePaths.size() > 0 || vPossiblePaths.size() == 1 && sCurrentTile->iIndex == 0;
 
 }
-const Maze::sCell* Solution::GuessBestPath()
+Maze::sCell* Solution::GuessBestPath()
 {
-	
+	if (vPossiblePaths.size() == 1) {
+		if (static_cast<Maze::eDir>(vPossiblePaths.front()) != eLastMove) {
 
-	std::vector<float> distances;
-	std::vector<int> closest_index;
+			vCurrentCorridor.clear();
+			vCurrentCorridor.resize(0);
+		}
+		eLastMove = static_cast<Maze::eDir>(vPossiblePaths.front());
+
+		sPreviousTile = sCurrentTile;
+		return ui.GetCellNeigbor(*sCurrentTile, static_cast<Maze::eDir>(vPossiblePaths.front()), false);
+	}
+
+	std::list<std::pair<float, Maze::eDir>> distances;
+
+	int closest_index = 0;
 
 	//get the distance to each direction
 	for (const auto& i : vPossiblePaths) {
-		const sCell* cell = GetCellNeigbor(*sCurrentTile, i, false);
+		const Maze::sCell* cell = sCurrentTile->vAllNeighbors[(int)i];
 		const ImVec2 subtracted = ImVec2(vEndTile.x - cell->vPos.x, vEndTile.y - cell->vPos.y);
-		distances.push_back(sqrtf(subtracted.x * subtracted.x + subtracted.y * subtracted.y));
-
+		distances.push_back(std::make_pair((subtracted.x * subtracted.x + subtracted.y * subtracted.y), i));
 	}
 
 	//prefer the route that takes you closer to the end tile
 	//get the index closest to the end
-	float lowest = distances.front();
+	float lowest = distances.front().first;
+	const size_t size = distances.size();
+	for (const auto& i : distances) {
 
-	for (int i = 1; i < distances.size(); i++) {
-		if (distances[i] < lowest) {
-			lowest = distances[i];
-			closest_index.insert(closest_index.begin(), i);
+		if (i.first <= lowest) {
+			lowest = i.first;
+			closest_index = (int)i.second;
+			//closest_index.insert(closest_index.begin(), distances[i].second);
 		}
 
 	}
 
-	const sCell* BestNeigbor = GetCellNeigbor(*sCurrentTile, static_cast<eDir>(closest_index[0]), false);
+	//an intersection, so clear the whole thing
+	vCurrentCorridor.clear();
+	
+	eLastMove = static_cast<Maze::eDir>(closest_index);
+	Maze::sCell* BestNeigbor = sCurrentTile->vAllNeighbors[closest_index];
 
 	//skip routes that are known to be deadends
-	if (BestNeigbor->bPathLeadsToDeadend) {
-		vPossiblePaths.erase(vPossiblePaths.begin() + closest_index[0], vPossiblePaths.begin() + closest_index[0] + 1);
-		return GuessBestPath(); //recursively find the next best path
-	}
+	//this should always be false
+	//if (BestNeigbor->bPathLeadsToDeadend) {
+	//	vPossiblePaths.erase(vPossiblePaths.begin() + closest_index, vPossiblePaths.begin() + closest_index + 1);
+	//	return GuessBestPath(); //recursively find the next best path
+	//}
+
+	sPreviousTile = sCurrentTile;
 
 	return BestNeigbor;
 }

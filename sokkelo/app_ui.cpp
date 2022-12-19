@@ -89,7 +89,13 @@ void AppUI::Render()
 	}
 
 
-
+	if (GetAsyncKeyState(VK_NUMPAD5) & 1) {
+		if (!solution.Initialized() && ui.bFinished) {
+			solution.Initialize();
+		}
+		std::thread(solution.DoStuffWrapper).detach();
+		Sleep(100);
+	}
 
 	const int horzPixels = iPixelsPerAxis.x;
 	const int vertPixels = iPixelsPerAxis.y;
@@ -97,7 +103,7 @@ void AppUI::Render()
 
 	if (!ui.bThreadActive) {
 		if (GetAsyncKeyState(VK_NUMPAD7) & 1) {
-			CoD4 cod4("D:\\Activision\\CallOfDuty4\\map_source\\mp_maze2.map", &ui, 256);
+			CoD4 cod4("C:\\Users\\Luukas\\Desktop\\mp_maze2.map", &ui, 256);
 			cod4.BeginConversion();
 		}
 		if (GetAsyncKeyState(VK_NUMPAD8) & 1) {
@@ -113,8 +119,9 @@ void AppUI::Render()
 		size_t i = 0;
 		for (auto& cell : ui.vCells) {
 
-			if (cell.bDeadend) {
-				Draw(cell.vPos, COL::BLUE);
+
+			if (cell.bPathLeadsToDeadend) {
+				Draw(cell.vPos, COL::RED);
 
 			}
 			else if (cell.bVisited) {
@@ -124,7 +131,20 @@ void AppUI::Render()
 				Draw(cell.vPos, COL::BLACK);
 
 			}
+			//if (solution.Initialized()) {
+			//	for (auto& i : solution.vCurrentCorridor) {
+			//		Draw(i->vPos, ImVec4(255, 0, 255, 255));
+			//	}
+			//	//if(solution.sPreviousTile)
+			//	//	Draw(solution.sPreviousTile->vPos, ImVec4(255, 0, 0, 255));
+			//	Draw(solution.sCurrentTile->vPos, ImVec4(0, 255, 0, 255));
+			//}
 			i++;
+		}
+		if (solution.Finished()) {
+			for (const auto& i : solution.vFinishPath) {
+				Draw(i->vPos, ImVec4(0, 255, 0, 255));
+			}
 		}
 		const Maze::sCell* last = &ui.vCells.back();
 		if(last->bVisited)

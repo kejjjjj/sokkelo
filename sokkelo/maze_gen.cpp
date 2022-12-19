@@ -16,6 +16,8 @@ void Maze::PopulateCells()
 			cell.vPos = ImVec2(x, y);
 			cell.bBacktraced = false;
 			cell.bDeadend = false;
+			cell.bPathLeadsToDeadend = false;
+			cell.fDeadendAngle = 0;
 			//cell.bAlreadyMerged = false;
 			//cell.vNeighbors.fill(nullptr);
 
@@ -37,12 +39,16 @@ void Maze::PopulateCellNeighbors()
 		cell.vNeighbors[(int)eDir::S] = GetCellNeigbor(cell, eDir::S);
 		cell.vNeighbors[(int)eDir::W] = GetCellNeigbor(cell, eDir::W);
 
+		cell.vAllNeighbors[(int)eDir::N] = GetCellNeigbor(cell, eDir::N, false);
+		cell.vAllNeighbors[(int)eDir::E] = GetCellNeigbor(cell, eDir::E, false);
+		cell.vAllNeighbors[(int)eDir::S] = GetCellNeigbor(cell, eDir::S, false);
+		cell.vAllNeighbors[(int)eDir::W] = GetCellNeigbor(cell, eDir::W, false);
 	}
 }
 Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls)
 {
 	int cellIndex = 0;
-	const size_t size = vCells.size();
+	const size_t size = this->vCells.size();
 	const int32_t multiplier = bSkipWalls == true ? 2 : 1;
 	switch (dir) {
 
@@ -50,7 +56,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 
 		//subtract iPixelsPerAxis*2 from the axis 
 
-		cellIndex = cell.iIndex - iPixelsPerAxis.x * multiplier;
+		cellIndex = cell.iIndex - this->iPixelsPerAxis.x * multiplier;
 
 		if (cellIndex < 0) //current cell is at the top level so it does not have a top neighbor
 			return nullptr;
@@ -64,10 +70,10 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 		//0 HAS to have a right neighbor unless it's a ?x2 grid
 		if (cell.iIndex != 0) {
 
-			int remainder = cell.iIndex % (iPixelsPerAxis.x);
+			int remainder = cell.iIndex % (this->iPixelsPerAxis.x);
 
 			//if the remainder is 0, then this cell is at the right edge
-			if (remainder == iPixelsPerAxis.x - 1) {
+			if (remainder == this->iPixelsPerAxis.x - 1) {
 				return 0;
 			}
 			if (cell.iIndex % 2 != 0 && bSkipWalls) {
@@ -81,21 +87,21 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 		if (cellIndex >= size)
 			return nullptr;
 		
-		return &vCells[cellIndex];
+		return &this->vCells[cellIndex];
 
 	case eDir::S: //below
 
-		cellIndex = cell.iIndex + iPixelsPerAxis.x * multiplier;
+		cellIndex = cell.iIndex + this->iPixelsPerAxis.x * multiplier;
 		
 		if (cellIndex >= size) //current cell doesn't have a below neighbor if it exceeds the vCells size
 			return nullptr;
 
-		return &vCells[cellIndex];
+		return &this->vCells[cellIndex];
 
 	case eDir::W: //left
 
 		//if the remainder is 0, then this cell is at the left edge
-		if (cell.iIndex % iPixelsPerAxis.x == 0) {
+		if (cell.iIndex % this->iPixelsPerAxis.x == 0) {
 			return 0;
 		}
 
@@ -108,7 +114,7 @@ Maze::sCell* Maze::GetCellNeigbor(const sCell& cell, const eDir& dir, const bool
 		if (cellIndex < 0)
 			return nullptr;
 
-		return &vCells[cellIndex];
+		return &this->vCells[cellIndex];
 	}
 
 
@@ -159,6 +165,7 @@ Maze::eMazeAlgorithm Maze::GetAlgorithm()
 }
 void Maze::StartGeneration()
 {
+	bFinished = false;
 	switch (algorithm) {
 	case eMazeAlgorithm::Depth_First:
 		ui.generation_thread = std::thread(ui.IterativeGenerationWrapper, 0);
@@ -297,7 +304,7 @@ void Maze::IterativeGeneration(const int& index) //index = starting position
 		}
 	}
 	bThreadActive = false;
-
+	bFinished = true;
 	return;
 
 }
@@ -428,6 +435,7 @@ void Maze::AldousBroderAlgorithm(const int& index)
 	}
 
 	bThreadActive = false;
+	bFinished = true;
 
 }
 void Maze::KillGeneration()

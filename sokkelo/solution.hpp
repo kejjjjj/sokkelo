@@ -8,30 +8,39 @@
 //even though the solution can be found when building the maze,
 //the point of this project is to test AI, so I will not give the AI any solutions
 //and instead I will let it learn by itself :)
-class Solution : public Maze
+class Solution
 {
 public:
 
 	void SolveTheMaze();
 
 	void Initialize();
-	void Restart(); 
+	void Restart();
+
+	static void DoStuffWrapper();
+	void DoStuff();
+
+	bool Initialized() { return bInitialized; }
+	bool Finished() { return bFinished; }
+	Maze::sCell* sCurrentTile;
+	Maze::sCell* sPreviousTile;
+	std::list<Maze::sCell*> vCurrentCorridor; //if the scan hits a deadend, mark every cell here as a deadend
+	std::list<Maze::sCell*> vFinishPath;
 
 private:
 
-	const sCell* EvaluateNextMove();
+	bool EvaluateNextMove();
 	bool GetPossiblePaths(); //returns false if at a deadend
-	const sCell* GuessBestPath();
+	Maze::sCell* GuessBestPath();
 
-	std::vector<eDir> vPossiblePaths; //directions, where the AI could advance from the current tile
-	std::vector<sCell*> vLikely; //likely to be a pixel that is the path to the solution
-	std::vector<sCell*> vCurrentCorridor; //if the scan hits a deadend, mark every cell here as a deadend
+	std::list<Maze::eDir> vPossiblePaths; //directions, where the AI could advance from the current tile
+	//std::vector<Maze::sCell*> vPath; //what blocks I've already visited during this generation, stops the ai from moving backwards
 	uint32_t iGenerations = 0; //how many times has the AI tried to solve this maze
-	sCell* sCurrentTile; 
-	sCell* sPreviousTile;
 	ImVec2 vEndTile;
 	bool bFinished = false;
+	bool bInitialized = false;
+	Maze::eDir eLastMove = Maze::eDir::INVALID;
 
 };
-
+inline Solution solution;
 #endif

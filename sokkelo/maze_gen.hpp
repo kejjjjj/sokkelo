@@ -17,7 +17,7 @@ public:
 
 	enum class eDir
 	{
-		N, E, S, W
+		N, E, S, W, INVALID
 	};
 
 	struct sCell
@@ -25,6 +25,8 @@ public:
 
 		int iIndex; //index on the grid, left to right, top to bottom order
 		std::array<sCell*, 4> vNeighbors;
+		std::array<sCell*, 4> vAllNeighbors; //includes walls
+
 		bool bVisited; //the cell has already been visited
 		bool bWall; //current cell is a wall
 		bool bBacktraced; //deadend
@@ -42,6 +44,15 @@ public:
 	void IterativeGeneration(const int& index);
 	void AldousBroderAlgorithm(const int& index);
 	void SetAlgorithm(const eMazeAlgorithm& alg);
+	eDir GetOpposite(const eDir dir) { 
+		switch (dir) {
+		case eDir::N:	return eDir::S;
+		case eDir::E:	return eDir::W;
+		case eDir::S:	return eDir::N;
+		case eDir::W:	return eDir::E;
+		default:		return eDir::INVALID; } 
+	}
+
 	eMazeAlgorithm GetAlgorithm();
 
 	void KillGeneration();
@@ -50,7 +61,7 @@ public:
 	bool bAbleToRender = false;
 	bool bThreadActive = false;
 	sCell* GetCellNeigbor(const sCell& cell, const eDir& dir, const bool bSkipWalls = true);
-
+	bool bFinished = false;
 private:
 	void PopulateCells();
 	void PopulateCellNeighbors();
